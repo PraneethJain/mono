@@ -55,6 +55,9 @@ def get_user_list(status: str):
                         episodes
                         duration
                         source
+                        mediaListEntry {
+                            progress
+                        }
                     }
                 }
             }
