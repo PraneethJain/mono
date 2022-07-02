@@ -6,6 +6,6 @@ def save_token():
         f.write(input("Paste the access token here: "))
 
 def get_token():
-    with open(r".\anilist\access_token.txt", "w") as f:
+    with open(r".\anilist\access_token.txt") as f:
         access_token = f.read()
     return access_token
