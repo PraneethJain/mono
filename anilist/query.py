@@ -1,17 +1,9 @@
-from authenticate import get_token
+from authenticate import get_headers
 import requests
 import json
 from rich import print
 
 url = "https://graphql.anilist.co"
-
-
-def get_headers():
-    return {
-        "Authorization": "Bearer " + get_token(),
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-    }
 
 
 def get_user_data():
