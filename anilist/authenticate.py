@@ -1,6 +1,5 @@
-import webbrowser
-
 def save_token():
+    import webbrowser
     url = f"https://anilist.co/api/v2/oauth/authorize?client_id=8068&response_type=token"
     webbrowser.open(url)
     with open(r".\anilist\access_token.txt", "w") as f:
