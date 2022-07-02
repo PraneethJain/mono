@@ -10,6 +10,3 @@ def get_token():
     with open(r".\anilist\access_token.txt", "w") as f:
         access_token = f.read()
     return access_token
-
-
-save_token()
