@@ -24,7 +24,7 @@ class PanelList(Widget):
 
     def process(self, content):
         s = ""
-        for i, ele in enumerate(content, start=1):
+        for ele in content:
             s += f"🟠 {ele}"
         return s
 
