@@ -1,4 +1,4 @@
-from authenticate import get_headers
+from .authenticate import get_headers
 import requests
 import json
 from rich import print
@@ -69,6 +69,3 @@ def get_user_list(status: str):
         url, json={"query": query, "variables": variables}, headers=get_headers()
     )
     return json.loads(data.text)["data"]["MediaListCollection"]["lists"][0]
-
-
-print(get_user_list("CURRENT"))

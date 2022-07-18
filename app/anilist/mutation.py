@@ -1,4 +1,4 @@
-from authenticate import get_headers
+from .authenticate import get_headers
 import requests
 from rich import print
 import json
