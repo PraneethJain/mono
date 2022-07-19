@@ -58,6 +58,10 @@ def get_user_list(status: str):
                         mediaListEntry {
                             progress
                         }
+                        nextAiringEpisode {
+                            airingAt
+                            episode
+                        }
                     }
                 }
             }
