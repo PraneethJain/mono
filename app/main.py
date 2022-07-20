@@ -36,6 +36,7 @@ class PanelList(Widget):
 class NewEpisode(Widget):
     
     mouse_over = Reactive(False)
+    string = Reactive("Placeholder data")
     
     def __init__(
         self,
@@ -44,10 +45,12 @@ class NewEpisode(Widget):
         name: str | None = None,
     ) -> None:
         super().__init__(name)
-        self.string = f"🔵 {content}"
+        self.content = content
+        self.string = f"🔵 {self.content}"
         self.unhover = "#845EC2 on default"
-        self.hover = "#D65DB1 on #F9F871"
+        self.hover = "#D65DB1 on #FFC75F"
         self.title = title
+        self.toggle = True
         
     def render(self) -> Panel:
         return Panel(self.string, style = self.hover if self.mouse_over else self.unhover, title=self.title)
@@ -57,6 +60,10 @@ class NewEpisode(Widget):
         
     def on_leave(self):
         self.mouse_over = False
+        
+    def on_click(self, event) -> None:
+        self.toggle = not self.toggle
+        self.string = f"🔵 {self.content}" if self.toggle else "🔴 You have been clicked"   
     
 
 
