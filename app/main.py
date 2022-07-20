@@ -64,7 +64,7 @@ class NewEpisode(Widget):
     def on_leave(self):
         self.style = self.unhover
 
-    def on_click(self, event) -> None:
+    def on_click(self) -> None:
         self.toggle = not self.toggle
         with open(r"./app/data/downloaded.json", "r") as f:
             downloaded = json.load(f)
