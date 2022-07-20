@@ -70,7 +70,7 @@ class NewEpisode(Widget):
             downloaded = json.load(f)
         if self.toggle:
             self.string = f"🟠 {self.content}"
-            downloaded.append(self.content)
+            if self.content not in downloaded: downloaded.append(self.content)
             
         else:
             self.string = f"🔵 {self.content}"
