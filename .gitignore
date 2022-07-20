@@ -4,7 +4,7 @@ __pycache__/
 *$py.class
 test.py
 access_token.txt
-
+data
 # C extensions
 *.so
 
