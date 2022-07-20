@@ -1,13 +1,11 @@
-from rich.markdown import Markdown
-import rich
-from rich.pretty import Pretty
 from rich.panel import Panel
 from rich.style import Style
-from rich.styled import Styled
+
 from textual.app import App
 from textual.reactive import Reactive
 from textual.widget import Widget
-from textual.widgets import Header, Footer, ScrollView, Placeholder, Static
+from textual.widgets import Header, Footer, Placeholder
+from textual.views._grid_view import GridView
 
 from anilist.query import get_user_list
 
@@ -35,6 +33,33 @@ class PanelList(Widget):
         return Panel(self.string, style=self.style, title=self.title, padding=(1, 1))
 
 
+class NewEpisode(Widget):
+    
+    mouse_over = Reactive(False)
+    
+    def __init__(
+        self,
+        content: str,
+        title: str | None = None,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(name)
+        self.string = f"🔵 {content}"
+        self.unhover = "#845EC2 on default"
+        self.hover = "#D65DB1 on #F9F871"
+        self.title = title
+        
+    def render(self) -> Panel:
+        return Panel(self.string, style = self.hover if self.mouse_over else self.unhover, title=self.title)
+    
+    def on_enter(self):
+        self.mouse_over = True
+        
+    def on_leave(self):
+        self.mouse_over = False
+    
+
+
 class Mono(App):
     async def on_load(self, event) -> None:
         await self.bind("q", "quit", "Quit")
@@ -60,12 +85,11 @@ class Mono(App):
                 self.new_episodes.append(
                     f"{entry['media']['title']['romaji']} Ep {i}\n"
                 )
-        self.new_episodes = PanelList(self.new_episodes)
 
         await self.view.dock(self.header, edge="top")
         await self.view.dock(self.footer, edge="bottom")
         await self.view.dock(self.shows, edge="left", size=60)
-        await self.view.dock(self.new_episodes, Placeholder(), edge="top")
+        await self.view.dock(*(NewEpisode(ele) for ele in self.new_episodes), edge="top", size=3)
 
 
 Mono.run(title="Mono", log="textual.log")
