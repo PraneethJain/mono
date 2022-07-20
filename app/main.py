@@ -1,3 +1,5 @@
+import json
+
 from rich.panel import Panel
 from rich.style import Style
 
@@ -35,8 +37,8 @@ class PanelList(Widget):
 
 class NewEpisode(Widget):
     
-    mouse_over = Reactive(False)
-    string = Reactive("Placeholder data")
+    string = Reactive("")
+    style = Reactive("none")
     
     def __init__(
         self,
@@ -49,22 +51,33 @@ class NewEpisode(Widget):
         self.string = f"🔵 {self.content}"
         self.unhover = "#845EC2 on default"
         self.hover = "#D65DB1 on #FFC75F"
+        self.style = self.unhover
         self.title = title
-        self.toggle = True
+        self.toggle = False
         
     def render(self) -> Panel:
-        return Panel(self.string, style = self.hover if self.mouse_over else self.unhover, title=self.title)
+        return Panel(self.string, style = self.style, title=self.title)
     
     def on_enter(self):
-        self.mouse_over = True
+        self.style = self.hover
         
     def on_leave(self):
-        self.mouse_over = False
-        
+        self.style = self.unhover
+
     def on_click(self, event) -> None:
         self.toggle = not self.toggle
-        self.string = f"🔵 {self.content}" if self.toggle else "🔴 You have been clicked"   
-    
+        with open(r"./app/data/downloaded.json", "r") as f:
+            downloaded = json.load(f)
+        if self.toggle:
+            self.string = f"🟠 {self.content}"
+            downloaded.append(self.content)
+            
+        else:
+            self.string = f"🔵 {self.content}"
+            downloaded.remove(self.content)
+            
+        with open(r"./app/data/downloaded.json", "w") as f:
+            json.dump(downloaded,f)      
 
 
 class Mono(App):
@@ -90,7 +103,7 @@ class Mono(App):
                 latest = entry["media"]["nextAiringEpisode"]["episode"] - 1
             for i in range(current + 1, latest + 1):
                 self.new_episodes.append(
-                    f"{entry['media']['title']['romaji']} Ep {i}\n"
+                    f"{entry['media']['title']['romaji']} Ep {i}"
                 )
 
         await self.view.dock(self.header, edge="top")
