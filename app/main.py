@@ -43,6 +43,7 @@ class Episode(Widget):
     string = Reactive("")
     style = Reactive("none")
     mouse_over = Reactive(False)
+    
     with open(r"./app/data/downloading.json", "r") as f:
         downloading = json.load(f)
     with open(r"./app/data/downloaded.json", "r") as f:
@@ -62,10 +63,10 @@ class Episode(Widget):
         self.hover = "#D65DB1 on #FFC75F"
         self.style = self.unhover
         if self.content in self.downloading:
-            self.title = "Downloading"
             self.string = f"🟠 {self.content}"
             self.set_interval(1,self.progress)
-            self.paused = False
+            self.paused = Torrent.get_torrent(self.downloading[self.content])['eta'] == 8640000
+            self.title = "Downloading : Paused" if self.paused else "Downloading : In Progress"
         elif self.content in self.downloaded:
             self.title = "Downloaded"
             self.string = f"🟢 {self.content}"
@@ -86,17 +87,6 @@ class Episode(Widget):
 
     def on_click(self) -> None:
 
-        if self.title == "New Episode":
-            magnet = find_magnet(self.content)
-            series = ' '.join(self.content.split()[:-2])
-            self.torrent = Torrent(series, magnet)
-            if self.content not in self.downloading:
-                self.downloading[self.content] = self.torrent.get_infohash()
-                self.title = "Downloading : In Progress"
-                self.set_interval(1,self.progress)
-                
-            self.string = f"🟠 {self.content}"
-            
         if "Downloading" in self.title:
             if self.paused:
                 self.title = "Downloading : In Progress"
@@ -105,18 +95,32 @@ class Episode(Widget):
                 self.title = "Downloading : Paused"
                 Torrent.pause_torrent(self.downloading[self.content])
             self.paused = not self.paused
+
+        if self.title == "New Episode":
+            magnet = find_magnet(self.content)
+            series = ' '.join(self.content.split()[:-2])
+            self.torrent = Torrent(series, magnet)
+            if self.content not in self.downloading:
+                self.downloading[self.content] = self.torrent.get_infohash()
+                self.title = "Downloading : In Progress"
+                self.paused = False
+                self.set_interval(1,self.progress)
+                
+            self.string = f"🟠 {self.content}"
+            
             
         with open(r"./app/data/downloading.json", "w") as f:
             json.dump(self.downloading, f)
 
     def progress(self) -> None:
+        if Torrent.is_completed(self.downloading[self.content]):
+            self.title = "Downloaded"
+            self.string = f"🟢 {self.content}"
         progress = Torrent.get_progress(self.downloading[self.content])
         if progress>100:
             progress = 100
-            self.title = "Downloaded"
-            self.string = f"🟢 {self.content}"
         else:
-            self.string = f"{'⚪' if self.paused else '🟠'} {self.content} {progress}"
+            self.string = f"{'⚪' if self.paused else '🟠'  } {self.content} {progress}"
 
 class Mono(App):
     async def on_load(self, event) -> None:
