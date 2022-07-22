@@ -56,7 +56,7 @@ class Episode(Widget):
 
         super().__init__(name)
 
-        self.content = f"{media['title']['romaji']} Ep {ep_num}"
+        self.content = f"{media['title']['romaji']} Ep {ep_num}".replace(':','')
         self.ep_num = ep_num
         self.media_id = media["id"]
         self.string = f"🔵 {self.content}"
