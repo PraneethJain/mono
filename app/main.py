@@ -10,6 +10,9 @@ from textual.widgets import Header, Footer, Placeholder
 from textual.views._grid_view import GridView
 
 from anilist.query import get_user_list
+from anilist.mutation import set_progress
+from scraper import find_magnet
+from downloader import Torrent
 
 
 class PanelList(Widget):
@@ -35,50 +38,85 @@ class PanelList(Widget):
         return Panel(self.string, style=self.style, title=self.title, padding=(1, 1))
 
 
-class NewEpisode(Widget):
-    
+class Episode(Widget):
+
     string = Reactive("")
     style = Reactive("none")
-    
+    mouse_over = Reactive(False)
+    with open(r"./app/data/downloading.json", "r") as f:
+        downloading = json.load(f)
+    with open(r"./app/data/downloaded.json", "r") as f:
+        downloaded = json.load(f)
+
     def __init__(
         self,
         content: str,
-        title: str | None = None,
         name: str | None = None,
     ) -> None:
+        
         super().__init__(name)
+
         self.content = content
         self.string = f"🔵 {self.content}"
         self.unhover = "#845EC2 on default"
         self.hover = "#D65DB1 on #FFC75F"
         self.style = self.unhover
-        self.title = title
-        self.toggle = False
-        
+        if self.content in self.downloading:
+            self.title = "Downloading"
+            self.string = f"🟠 {self.content}"
+            self.set_interval(1,self.progress)
+            self.paused = False
+        elif self.content in self.downloaded:
+            self.title = "Downloaded"
+            self.string = f"🟢 {self.content}"
+        else:
+            self.title = "New Episode"
+            self.string = f"🔵 {self.content}"
+
     def render(self) -> Panel:
-        return Panel(self.string, style = self.style, title=self.title)
-    
+        return Panel(self.string, style=self.style, title=self.title, title_align="left")
+
     def on_enter(self):
+        self.mouse_over = True
         self.style = self.hover
-        
+
     def on_leave(self):
+        self.mouse_over = False
         self.style = self.unhover
 
     def on_click(self) -> None:
-        self.toggle = not self.toggle
-        with open(r"./app/data/downloaded.json", "r") as f:
-            downloaded = json.load(f)
-        if self.toggle:
-            self.string = f"🟠 {self.content}"
-            if self.content not in downloaded: downloaded.append(self.content)
-            
-        else:
-            self.string = f"🔵 {self.content}"
-            downloaded.remove(self.content)
-            
-        with open(r"./app/data/downloaded.json", "w") as f:
-            json.dump(downloaded,f)      
 
+        if self.title == "New Episode":
+            magnet = find_magnet(self.content)
+            series = ' '.join(self.content.split()[:-2])
+            self.torrent = Torrent(series, magnet)
+            if self.content not in self.downloading:
+                self.downloading[self.content] = self.torrent.get_infohash()
+                self.title = "Downloading : In Progress"
+                self.set_interval(1,self.progress)
+                
+            self.string = f"🟠 {self.content}"
+            
+        if "Downloading" in self.title:
+            if self.paused:
+                self.title = "Downloading : In Progress"
+                Torrent.resume_torrent(self.downloading[self.content])
+            else:
+                self.title = "Downloading : Paused"
+                Torrent.pause_torrent(self.downloading[self.content])
+            self.paused = not self.paused
+            
+        with open(r"./app/data/downloading.json", "w") as f:
+            json.dump(self.downloading, f)
+
+    def progress(self) -> None:
+        progress = Torrent.get_progress(self.downloading[self.content])
+        if progress>100:
+            progress = 100
+            self.title = "Downloaded"
+            self.string = f"🟢 {self.content}"
+        else:
+            self.string = f"{'⚪' if self.paused else '🟠'} {self.content} {progress}"
 
 class Mono(App):
     async def on_load(self, event) -> None:
@@ -102,14 +140,14 @@ class Mono(App):
             else:
                 latest = entry["media"]["nextAiringEpisode"]["episode"] - 1
             for i in range(current + 1, latest + 1):
-                self.new_episodes.append(
-                    f"{entry['media']['title']['romaji']} Ep {i}"
-                )
+                self.new_episodes.append(f"{entry['media']['title']['romaji']} Ep {i}")
 
         await self.view.dock(self.header, edge="top")
         await self.view.dock(self.footer, edge="bottom")
-        await self.view.dock(self.shows, edge="left", size=60)
-        await self.view.dock(*(NewEpisode(ele) for ele in self.new_episodes), edge="top", size=3)
+        await self.view.dock(self.shows, edge="left", size=50)
+        await self.view.dock(
+            *(Episode(ele) for ele in self.new_episodes), edge="top", size=3
+        )
 
 
 Mono.run(title="Mono", log="textual.log")
