@@ -46,8 +46,6 @@ class Episode(Widget):
     
     with open(r"./app/data/downloading.json", "r") as f:
         downloading = json.load(f)
-    with open(r"./app/data/downloaded.json", "r") as f:
-        downloaded = json.load(f)
 
     def __init__(
         self,
@@ -63,13 +61,14 @@ class Episode(Widget):
         self.hover = "#D65DB1 on #FFC75F"
         self.style = self.unhover
         if self.content in self.downloading:
-            self.string = f"🟠 {self.content}"
-            self.set_interval(1,self.progress)
-            self.paused = Torrent.get_torrent(self.downloading[self.content])['eta'] == 8640000
-            self.title = "Downloading : Paused" if self.paused else "Downloading : In Progress"
-        elif self.content in self.downloaded:
-            self.title = "Downloaded"
-            self.string = f"🟢 {self.content}"
+            if Torrent.is_completed(self.downloading[self.content]):
+                self.string = f"🟢 {self.content}"
+                self.title = "Downloaded"
+            else:
+                self.string = f"🟠 {self.content}"
+                self.set_interval(1,self.progress)
+                self.paused = Torrent.get_torrent(self.downloading[self.content])['eta'] == 8640000
+                self.title = "Downloading : Paused" if self.paused else "Downloading : In Progress"
         else:
             self.title = "New Episode"
             self.string = f"🔵 {self.content}"
