@@ -51,32 +51,46 @@ class Episode(Widget):
 
     def __init__(
         self,
-        content: str,
+        media,
+        ep_num,
         name: str | None = None,
     ) -> None:
-        
+
         super().__init__(name)
 
-        self.content = content
+        self.content = f"{media['title']['romaji']} Ep {ep_num}"
+        self.ep_num = ep_num
+        self.media_id = media["id"]
         self.string = f"🔵 {self.content}"
         self.unhover = "#845EC2 on default"
         self.hover = "#D65DB1 on #FFC75F"
         self.style = self.unhover
         if self.content in self.downloading:
-            if Torrent.is_completed(self.downloading[self.content]['infohash']):
+            if Torrent.is_completed(self.downloading[self.content]["infohash"]):
                 self.string = f"🟢 {self.content}"
                 self.title = "Downloaded"
             else:
                 self.string = f"🟠 {self.content}"
-                self.set_interval(1,self.progress)
-                self.paused = Torrent.get_torrent(self.downloading[self.content]['infohash'])['eta'] == 8640000
-                self.title = "Downloading : Paused" if self.paused else "Downloading : In Progress"
+                self.set_interval(1, self.progress)
+                self.paused = (
+                    Torrent.get_torrent(self.downloading[self.content]["infohash"])[
+                        "eta"
+                    ]
+                    == 8640000
+                )
+                self.title = (
+                    "Downloading : Paused"
+                    if self.paused
+                    else "Downloading : In Progress"
+                )
         else:
             self.title = "New Episode"
             self.string = f"🔵 {self.content}"
 
     def render(self) -> Panel:
-        return Panel(self.string, style=self.style, title=self.title, title_align="left")
+        return Panel(
+            self.string, style=self.style, title=self.title, title_align="left"
+        )
 
     def on_enter(self):
         self.style = self.hover
@@ -90,49 +104,56 @@ class Episode(Widget):
 
             if event.button == 1:
                 self.title = "Now Playing"
-                os.system(f"\"{Torrent.get_savepath(self.downloading[self.content]['infohash'])}\\{self.downloading[self.content]['title']}\"")
+                os.system(
+                    f"\"{Torrent.get_savepath(self.downloading[self.content]['infohash'])}\\{self.downloading[self.content]['title']}\""
+                )
                 self.title = "Downloaded"
             elif event.button == 3:
-                # UPDATE ANILIST TO COMPLETE THE EPISODE
+                set_progress(self.media_id, self.ep_num)
                 self.string = f"🟡 {self.content}"
                 self.title = "Completed"
-        
+
         elif "Downloading" in self.title:
             if self.paused:
                 self.title = "Downloading : In Progress"
-                Torrent.resume_torrent(self.downloading[self.content]['infohash'])
+                Torrent.resume_torrent(self.downloading[self.content]["infohash"])
             else:
                 self.title = "Downloading : Paused"
-                Torrent.pause_torrent(self.downloading[self.content]['infohash'])
+                Torrent.pause_torrent(self.downloading[self.content]["infohash"])
             self.paused = not self.paused
 
         elif self.title == "New Episode":
             title, magnet = find_magnet(self.content)
-            series = ' '.join(self.content.split()[:-2])
+            series = " ".join(self.content.split()[:-2])
             self.torrent = Torrent(series, magnet)
             if self.content not in self.downloading:
-                self.downloading[self.content] = {'infohash': self.torrent.get_infohash(), 'title': title}
+                self.downloading[self.content] = {
+                    "infohash": self.torrent.get_infohash(),
+                    "title": title,
+                }
                 self.title = "Downloading : In Progress"
                 self.paused = False
-                self.set_interval(1,self.progress)
-                
+                self.set_interval(1, self.progress)
+
             self.string = f"🟠 {self.content}"
-            
-            
+
         with open(r"./app/data/downloading.json", "w") as f:
             json.dump(self.downloading, f)
 
     def progress(self) -> None:
-        if Torrent.is_completed(self.downloading[self.content]['infohash']):
-            if self.title!="Completed":
+        if Torrent.is_completed(self.downloading[self.content]["infohash"]):
+            if self.title != "Completed":
                 self.title = "Downloaded"
                 self.string = f"🟢 {self.content}"
         else:
-            progress = Torrent.get_progress(self.downloading[self.content]['infohash'])
-            if progress>100:
+            progress = Torrent.get_progress(self.downloading[self.content]["infohash"])
+            if progress > 100:
                 progress = 100
             else:
-                self.string = f"{'⚪' if self.paused else '🟠'  } {self.content} {progress}"
+                self.string = (
+                    f"{'⚪' if self.paused else '🟠'  } {self.content} {progress}"
+                )
+
 
 class Mono(App):
     async def on_load(self, event) -> None:
@@ -156,13 +177,14 @@ class Mono(App):
             else:
                 latest = entry["media"]["nextAiringEpisode"]["episode"] - 1
             for i in range(current + 1, latest + 1):
-                self.new_episodes.append(f"{entry['media']['title']['romaji']} Ep {i}")
+                self.new_episodes.append((entry["media"], i))
+                # self.new_episodes.append(f"{entry['media']['title']['romaji']} Ep {i}")
 
         await self.view.dock(self.header, edge="top")
         await self.view.dock(self.footer, edge="bottom")
         await self.view.dock(self.shows, edge="left", size=50)
         await self.view.dock(
-            *(Episode(ele) for ele in self.new_episodes), edge="top", size=3
+            *(Episode(*ele) for ele in self.new_episodes), edge="top", size=3
         )
 
 
