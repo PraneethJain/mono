@@ -1,4 +1,5 @@
 import json
+import os
 
 from rich.panel import Panel
 from rich.style import Style
@@ -8,6 +9,7 @@ from textual.reactive import Reactive
 from textual.widget import Widget
 from textual.widgets import Header, Footer, Placeholder
 from textual.views._grid_view import GridView
+from textual.events import Click
 
 from anilist.query import get_user_list
 from anilist.mutation import set_progress
@@ -42,8 +44,8 @@ class Episode(Widget):
 
     string = Reactive("")
     style = Reactive("none")
-    mouse_over = Reactive(False)
-    
+    title = Reactive("none")
+
     with open(r"./app/data/downloading.json", "r") as f:
         downloading = json.load(f)
 
@@ -61,13 +63,13 @@ class Episode(Widget):
         self.hover = "#D65DB1 on #FFC75F"
         self.style = self.unhover
         if self.content in self.downloading:
-            if Torrent.is_completed(self.downloading[self.content]):
+            if Torrent.is_completed(self.downloading[self.content]['infohash']):
                 self.string = f"🟢 {self.content}"
                 self.title = "Downloaded"
             else:
                 self.string = f"🟠 {self.content}"
                 self.set_interval(1,self.progress)
-                self.paused = Torrent.get_torrent(self.downloading[self.content])['eta'] == 8640000
+                self.paused = Torrent.get_torrent(self.downloading[self.content]['infohash'])['eta'] == 8640000
                 self.title = "Downloading : Paused" if self.paused else "Downloading : In Progress"
         else:
             self.title = "New Episode"
@@ -77,30 +79,39 @@ class Episode(Widget):
         return Panel(self.string, style=self.style, title=self.title, title_align="left")
 
     def on_enter(self):
-        self.mouse_over = True
         self.style = self.hover
 
     def on_leave(self):
-        self.mouse_over = False
         self.style = self.unhover
 
-    def on_click(self) -> None:
+    def on_click(self, event) -> None:
 
-        if "Downloading" in self.title:
+        if self.title == "Downloaded":
+
+            if event.button == 1:
+                self.title = "Now Playing"
+                os.system(f"\"{Torrent.get_savepath(self.downloading[self.content]['infohash'])}\\{self.downloading[self.content]['title']}\"")
+                self.title = "Downloaded"
+            elif event.button == 3:
+                # UPDATE ANILIST TO COMPLETE THE EPISODE
+                self.string = f"🟡 {self.content}"
+                self.title = "Completed"
+        
+        elif "Downloading" in self.title:
             if self.paused:
                 self.title = "Downloading : In Progress"
-                Torrent.resume_torrent(self.downloading[self.content])
+                Torrent.resume_torrent(self.downloading[self.content]['infohash'])
             else:
                 self.title = "Downloading : Paused"
-                Torrent.pause_torrent(self.downloading[self.content])
+                Torrent.pause_torrent(self.downloading[self.content]['infohash'])
             self.paused = not self.paused
 
-        if self.title == "New Episode":
-            magnet = find_magnet(self.content)
+        elif self.title == "New Episode":
+            title, magnet = find_magnet(self.content)
             series = ' '.join(self.content.split()[:-2])
             self.torrent = Torrent(series, magnet)
             if self.content not in self.downloading:
-                self.downloading[self.content] = self.torrent.get_infohash()
+                self.downloading[self.content] = {'infohash': self.torrent.get_infohash(), 'title': title}
                 self.title = "Downloading : In Progress"
                 self.paused = False
                 self.set_interval(1,self.progress)
@@ -112,14 +123,16 @@ class Episode(Widget):
             json.dump(self.downloading, f)
 
     def progress(self) -> None:
-        if Torrent.is_completed(self.downloading[self.content]):
-            self.title = "Downloaded"
-            self.string = f"🟢 {self.content}"
-        progress = Torrent.get_progress(self.downloading[self.content])
-        if progress>100:
-            progress = 100
+        if Torrent.is_completed(self.downloading[self.content]['infohash']):
+            if self.title!="Completed":
+                self.title = "Downloaded"
+                self.string = f"🟢 {self.content}"
         else:
-            self.string = f"{'⚪' if self.paused else '🟠'  } {self.content} {progress}"
+            progress = Torrent.get_progress(self.downloading[self.content]['infohash'])
+            if progress>100:
+                progress = 100
+            else:
+                self.string = f"{'⚪' if self.paused else '🟠'  } {self.content} {progress}"
 
 class Mono(App):
     async def on_load(self, event) -> None:

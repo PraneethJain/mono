@@ -42,6 +42,10 @@ class Torrent:
     @classmethod
     def is_completed(cls, infohash) -> None:
         return cls.client.get_torrent(infohash)["completion_date"] != -1
+    
+    @classmethod
+    def get_savepath(cls, infohash) -> None:
+        return cls.client.get_torrent(infohash)["save_path"]
 
     @classmethod
     def get_torrent(cls, infohash) -> None:

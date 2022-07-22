@@ -13,20 +13,21 @@ def find_magnet(title: str):
         if item.category.text == "Anime":
             desc = BeautifulSoup(item.description.text)
             magnet = desc.find_all("a")[1]["href"]
+            title = item.title.text
             for line in desc.text.splitlines():
                 if "Submitter" in line:
                     submitter = line.split()[-1]
                     break
             if submitter not in options:
                 options[submitter] = {}
-            if "1080p" in item.title.text:
-                options[submitter]["1080p"] = magnet
-            elif "720p" in item.title.text:
-                options[submitter]["720p"] = magnet
-            elif "480p" in item.title.text:
-                options[submitter]["480p"] = magnet
+            if "1080p" in title:
+                options[submitter]["1080p"] = title,magnet
+            elif "720p" in title:
+                options[submitter]["720p"] = title,magnet
+            elif "480p" in title:
+                options[submitter]["480p"] = title,magnet
             else:
-                options[submitter]["noqp"] = magnet
+                options[submitter]["noqp"] = title,magnet
     if "subsplease" in options:
         return options["subsplease"]["1080p"]
     elif "Erai-raws" in options:
