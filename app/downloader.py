@@ -1,6 +1,7 @@
 from qbittorrent import Client
-from rich import print
-from scraper import find_magnet
+from urllib3 import disable_warnings
+
+disable_warnings(ResourceWarning)
 
 
 class Torrent:
@@ -42,7 +43,7 @@ class Torrent:
     @classmethod
     def is_completed(cls, infohash) -> None:
         return cls.client.get_torrent(infohash)["completion_date"] != -1
-    
+
     @classmethod
     def get_savepath(cls, infohash) -> None:
         return cls.client.get_torrent(infohash)["save_path"]

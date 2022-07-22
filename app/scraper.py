@@ -1,13 +1,12 @@
-import requests
+from requests import get
 from bs4 import BeautifulSoup
-from rich import print
 
 
 def find_magnet(title: str):
     title = title.replace("2nd Season", "S2")
     search_term = " ".join(title.split()[:-2]) + " - " + f"{int(title.split()[-1]):02}"
     url = f"https://www.tokyotosho.info/rss.php?terms={search_term.replace(' ','+')}&type=1&searchName=true&searchComment=true&size_min=&size_max=&username="
-    soup = BeautifulSoup(requests.get(url).text, "xml")
+    soup = BeautifulSoup(get(url).text, "xml")
     options = {}
     for item in soup.find_all("item"):
         if item.category.text == "Anime":
@@ -21,13 +20,13 @@ def find_magnet(title: str):
             if submitter not in options:
                 options[submitter] = {}
             if "1080p" in title:
-                options[submitter]["1080p"] = title,magnet
+                options[submitter]["1080p"] = title, magnet
             elif "720p" in title:
-                options[submitter]["720p"] = title,magnet
+                options[submitter]["720p"] = title, magnet
             elif "480p" in title:
-                options[submitter]["480p"] = title,magnet
+                options[submitter]["480p"] = title, magnet
             else:
-                options[submitter]["noqp"] = title,magnet
+                options[submitter]["noqp"] = title, magnet
     if "subsplease" in options:
         return options["subsplease"]["1080p"]
     elif "Erai-raws" in options:

@@ -8,8 +8,6 @@ from textual.app import App
 from textual.reactive import Reactive
 from textual.widget import Widget
 from textual.widgets import Header, Footer, Placeholder
-from textual.views._grid_view import GridView
-from textual.events import Click
 
 from anilist.query import get_user_list
 from anilist.mutation import set_progress

@@ -1,8 +1,9 @@
 from .authenticate import get_headers
-import requests
-import json
+from requests import post
+from json import loads
 
 url = "https://graphql.anilist.co"
+
 
 def set_progress(mediaId, progress):
     query = """
@@ -16,7 +17,7 @@ def set_progress(mediaId, progress):
     }
     """
     variables = {"mediaId": mediaId, "progress": progress}
-    data = requests.post(
+    data = post(
         url, json={"query": query, "variables": variables}, headers=get_headers()
     )
-    return json.loads(data.text)
+    return loads(data.text)
