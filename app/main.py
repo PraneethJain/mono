@@ -99,7 +99,7 @@ class Episode(Widget):
             self.uncomplete()
 
         elif "Downloading" in self.title:
-            self.pause_play()
+            self.pause_resume()
 
         elif self.title == "New Episode":
             self.download()
@@ -151,7 +151,7 @@ class Episode(Widget):
             self.paused = False
             self.set_downloading()
 
-    def pause_play(self) -> None:
+    def pause_resume(self) -> None:
         self.paused = not self.paused
         if self.paused:
             self.title = "Downloading : Paused"
