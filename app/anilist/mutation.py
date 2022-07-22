@@ -1,6 +1,5 @@
 from .authenticate import get_headers
 import requests
-from rich import print
 import json
 
 url = "https://graphql.anilist.co"
@@ -21,5 +20,3 @@ def set_progress(mediaId, progress):
         url, json={"query": query, "variables": variables}, headers=get_headers()
     )
     return json.loads(data.text)
-
-print(set_progress(145545, 2))
