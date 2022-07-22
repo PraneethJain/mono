@@ -110,6 +110,11 @@ class Episode(Widget):
                 set_progress(self.media_id, self.ep_num)
                 self.string = f"🟡 {self.content}"
                 self.title = "Completed"
+        elif self.title == "Completed":
+            if event.button == 3:
+                set_progress(self.media_id, self.ep_num - 1)
+                self.title = "Downloaded"
+                self.string = f"🟢 {self.content}"
 
         elif "Downloading" in self.title:
             if self.paused:
