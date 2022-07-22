@@ -56,34 +56,23 @@ class Episode(Widget):
 
         super().__init__(name)
 
-        self.content = f"{media['title']['romaji']} Ep {ep_num}".replace(':','')
+        self.content = f"{media['title']['romaji']} Ep {ep_num}".replace(":", "")
         self.ep_num = ep_num
         self.media_id = media["id"]
-        self.string = f"🔵 {self.content}"
-        self.unhover = "#845EC2 on default"
-        self.hover = "#D65DB1 on #FFC75F"
-        self.style = self.unhover
+        self.style = "none"
         if self.content in self.downloading:
             if Torrent.is_completed(self.downloading[self.content]["infohash"]):
-                self.string = f"🟢 {self.content}"
-                self.title = "Downloaded"
+                self.set_downloaded()
             else:
-                self.string = f"🟠 {self.content}"
-                self.set_interval(1, self.progress)
                 self.paused = (
                     Torrent.get_torrent(self.downloading[self.content]["infohash"])[
                         "eta"
                     ]
                     == 8640000
                 )
-                self.title = (
-                    "Downloading : Paused"
-                    if self.paused
-                    else "Downloading : In Progress"
-                )
+                self.set_downloading()
         else:
-            self.title = "New Episode"
-            self.string = f"🔵 {self.content}"
+            self.set_new_episode()
 
     def render(self) -> Panel:
         return Panel(
@@ -91,71 +80,97 @@ class Episode(Widget):
         )
 
     def on_enter(self):
-        self.style = self.hover
+        pass
 
     def on_leave(self):
-        self.style = self.unhover
+        pass
 
     def on_click(self, event) -> None:
 
         if self.title == "Downloaded":
-
             if event.button == 1:
-                self.title = "Now Playing"
-                os.system(
+                self.play(
                     f"\"{Torrent.get_savepath(self.downloading[self.content]['infohash'])}\\{self.downloading[self.content]['title']}\""
                 )
-                self.title = "Downloaded"
             elif event.button == 3:
-                set_progress(self.media_id, self.ep_num)
-                self.string = f"🟡 {self.content}"
-                self.title = "Completed"
+                self.complete()
+
         elif self.title == "Completed":
-            if event.button == 3:
-                set_progress(self.media_id, self.ep_num - 1)
-                self.title = "Downloaded"
-                self.string = f"🟢 {self.content}"
+            self.uncomplete()
 
         elif "Downloading" in self.title:
-            if self.paused:
-                self.title = "Downloading : In Progress"
-                Torrent.resume_torrent(self.downloading[self.content]["infohash"])
-            else:
-                self.title = "Downloading : Paused"
-                Torrent.pause_torrent(self.downloading[self.content]["infohash"])
-            self.paused = not self.paused
+            self.pause_play()
 
         elif self.title == "New Episode":
-            title, magnet = find_magnet(self.content)
-            series = " ".join(self.content.split()[:-2])
-            self.torrent = Torrent(series, magnet)
-            if self.content not in self.downloading:
-                self.downloading[self.content] = {
-                    "infohash": self.torrent.get_infohash(),
-                    "title": title,
-                }
-                self.title = "Downloading : In Progress"
-                self.paused = False
-                self.set_interval(1, self.progress)
-
-            self.string = f"🟠 {self.content}"
+            self.download()
 
         with open(r"./app/data/downloading.json", "w") as f:
             json.dump(self.downloading, f)
 
-    def progress(self) -> None:
+    def set_new_episode(self) -> None:
+        self.title = "New Episode"
+        self.string = f"🔵 {self.content}"
+
+    def set_downloading(self) -> None:
         if Torrent.is_completed(self.downloading[self.content]["infohash"]):
             if self.title != "Completed":
-                self.title = "Downloaded"
-                self.string = f"🟢 {self.content}"
+                self.set_downloaded()
         else:
+
             progress = Torrent.get_progress(self.downloading[self.content]["infohash"])
             if progress > 100:
                 progress = 100
+
+            self.set_timer(1, self.set_downloading)
+
+            if self.paused:
+                self.title = "Downloading : Paused"
+                self.string = f"⚪ {self.content} {progress}%"
             else:
-                self.string = (
-                    f"{'⚪' if self.paused else '🟠'  } {self.content} {progress}"
-                )
+                self.title = "Downloading : In Progress"
+                self.string = f"🟠 {self.content} {progress}%"
+
+    def set_downloaded(self) -> None:
+        self.title = "Downloaded"
+        self.string = f"🟢 {self.content}"
+
+    def set_completed(self) -> None:
+        self.string = f"🟡 {self.content}"
+        self.title = "Completed"
+
+    def download(self) -> None:
+        title, magnet = find_magnet(self.content)
+        series = " ".join(self.content.split()[:-2])
+        self.torrent = Torrent(series, magnet)
+
+        if self.content not in self.downloading:
+            self.downloading[self.content] = {
+                "infohash": self.torrent.get_infohash(),
+                "title": title,
+            }
+            self.paused = False
+            self.set_downloading()
+
+    def pause_play(self) -> None:
+        self.paused = not self.paused
+        if self.paused:
+            self.title = "Downloading : Paused"
+            Torrent.pause_torrent(self.downloading[self.content]["infohash"])
+        else:
+            self.title = "Downloading : In Progress"
+            Torrent.resume_torrent(self.downloading[self.content]["infohash"])
+
+    def complete(self) -> None:
+        set_progress(self.media_id, self.ep_num)
+        self.set_completed()
+
+    def uncomplete(self) -> None:
+        set_progress(self.media_id, self.ep_num - 1)
+        self.set_downloaded()
+
+    @staticmethod
+    def play(path) -> None:
+        os.system(path)
 
 
 class Mono(App):
@@ -181,7 +196,6 @@ class Mono(App):
                 latest = entry["media"]["nextAiringEpisode"]["episode"] - 1
             for i in range(current + 1, latest + 1):
                 self.new_episodes.append((entry["media"], i))
-                # self.new_episodes.append(f"{entry['media']['title']['romaji']} Ep {i}")
 
         await self.view.dock(self.header, edge="top")
         await self.view.dock(self.footer, edge="bottom")
