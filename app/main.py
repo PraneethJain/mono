@@ -7,7 +7,8 @@ from rich.style import Style
 from textual.app import App
 from textual.reactive import Reactive
 from textual.widget import Widget
-from textual.widgets import Header, Footer, Placeholder
+from textual.widgets import Header, Footer
+from textual.views._grid_view import GridView
 
 from anilist.query import get_user_list
 from anilist.mutation import set_progress
@@ -172,6 +173,28 @@ class Episode(Widget):
     def play(path) -> None:
         os.system(path)
 
+class Episodes(GridView):
+
+    def __init__(self, user_list,layout = None, name: str | None = None) -> None:
+        super().__init__(layout, name)
+        self.user_list = user_list
+
+    
+    def on_mount(self) -> None:
+        self.episodes = []
+        for entry in self.user_list:
+            current = entry["media"]["mediaListEntry"]["progress"]
+            if entry["media"]["nextAiringEpisode"] is None:
+                latest = entry["media"]["episodes"]
+            else:
+                latest = entry["media"]["nextAiringEpisode"]["episode"] - 1
+            for i in range(current + 1, latest + 1):
+                self.episodes.append(Episode(entry["media"], i))
+
+        self.grid.add_column("col")
+        self.grid.add_row("row",repeat=len(self.episodes)+1, size=3)
+        self.grid.place(*self.episodes)
+        
 
 class Mono(App):
     async def on_load(self, event) -> None:
@@ -200,9 +223,6 @@ class Mono(App):
         await self.view.dock(self.header, edge="top")
         await self.view.dock(self.footer, edge="bottom")
         await self.view.dock(self.shows, edge="left", size=50)
-        await self.view.dock(
-            *(Episode(*ele) for ele in self.new_episodes), edge="top", size=3
-        )
-
+        await self.view.dock(Episodes(self.user_list), edge="top")
 
 Mono.run(title="Mono", log="textual.log")
