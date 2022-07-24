@@ -31,3 +31,8 @@ def find_magnet(title: str):
         return options["subsplease"]["1080p"]
     elif "Erai-raws" in options:
         return options["Erai-raws"]["1080p"]
+    else:
+        temp = title.split()
+        temp.pop(-3)
+        title = " ".join(temp)
+        return find_magnet(title)

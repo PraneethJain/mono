@@ -173,13 +173,12 @@ class Episode(Widget):
     def play(path) -> None:
         os.system(path)
 
-class Episodes(GridView):
 
-    def __init__(self, user_list,layout = None, name: str | None = None) -> None:
+class Episodes(GridView):
+    def __init__(self, user_list, layout=None, name: str | None = None) -> None:
         super().__init__(layout, name)
         self.user_list = user_list
 
-    
     def on_mount(self) -> None:
         self.episodes = []
         for entry in self.user_list:
@@ -192,9 +191,9 @@ class Episodes(GridView):
                 self.episodes.append(Episode(entry["media"], i))
 
         self.grid.add_column("col")
-        self.grid.add_row("row",repeat=len(self.episodes)+1, size=3)
+        self.grid.add_row("row", repeat=len(self.episodes) + 1, size=3)
         self.grid.place(*self.episodes)
-        
+
 
 class Mono(App):
     async def on_load(self, event) -> None:
@@ -224,5 +223,6 @@ class Mono(App):
         await self.view.dock(self.footer, edge="bottom")
         await self.view.dock(self.shows, edge="left", size=50)
         await self.view.dock(Episodes(self.user_list), edge="top")
+
 
 Mono.run(title="Mono", log="textual.log")
