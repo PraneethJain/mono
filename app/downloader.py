@@ -30,7 +30,7 @@ class Torrent:
     @classmethod
     def get_progress(cls, infohash) -> None:
         data = cls.client.get_torrent(infohash)
-        return round(data["total_downloaded"] / data["total_size"] * 100, 2)
+        return round(data["total_downloaded"] / data["total_size"] * 100, 1)
 
     @classmethod
     def pause_torrent(cls, infohash) -> None:
