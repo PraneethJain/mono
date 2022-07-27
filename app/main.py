@@ -16,29 +16,6 @@ from scraper import find_magnet
 from downloader import Torrent
 
 
-class PanelList(Widget):
-    def __init__(
-        self,
-        content: list,
-        style: Style = "none",
-        title: str | None = None,
-        name: str | None = None,
-    ) -> None:
-        super().__init__(name)
-        self.string = self.process(content)
-        self.style = style
-        self.title = title
-
-    def process(self, content):
-        s = ""
-        for ele in content:
-            s += f"🟠 {ele}"
-        return s
-
-    def render(self) -> Panel:
-        return Panel(self.string, style=self.style, title=self.title, padding=(1, 1))
-
-
 class Episode(Widget):
 
     string = Reactive("")
@@ -203,25 +180,9 @@ class Mono(App):
         self.header = Header(style="#FD7F20 on default")
         self.footer = Footer()
         self.user_list = get_user_list("CURRENT")["entries"]
-        self.shows = PanelList(
-            [entry["media"]["title"]["romaji"] + "\n" for entry in self.user_list],
-            style="#FDB750 on default",
-            title="[bold red]Currently Watching Shows",
-        )
-
-        self.new_episodes = []
-        for entry in self.user_list:
-            current = entry["media"]["mediaListEntry"]["progress"]
-            if entry["media"]["nextAiringEpisode"] is None:
-                latest = entry["media"]["episodes"]
-            else:
-                latest = entry["media"]["nextAiringEpisode"]["episode"] - 1
-            for i in range(current + 1, latest + 1):
-                self.new_episodes.append((entry["media"], i))
 
         await self.view.dock(self.header, edge="top")
         await self.view.dock(self.footer, edge="bottom")
-        await self.view.dock(self.shows, edge="left", size=50)
         await self.view.dock(Episodes(self.user_list), edge="top")
 
 
