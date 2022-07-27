@@ -29,6 +29,7 @@ class Episode(Widget):
         self,
         media,
         ep_num,
+        to_air: bool = False,
         name: str | None = None,
     ) -> None:
 
@@ -38,19 +39,22 @@ class Episode(Widget):
         self.ep_num = ep_num
         self.media_id = media["id"]
         self.style = "none"
-        if self.content in self.downloading:
-            if Torrent.is_completed(self.downloading[self.content]["infohash"]):
-                self.set_downloaded()
-            else:
-                self.paused = (
-                    Torrent.get_torrent(self.downloading[self.content]["infohash"])[
-                        "eta"
-                    ]
-                    == 8640000
-                )
-                self.set_downloading()
+        if to_air:
+            self.set_to_air()
         else:
-            self.set_new_episode()
+            if self.content in self.downloading:
+                if Torrent.is_completed(self.downloading[self.content]["infohash"]):
+                    self.set_downloaded()
+                else:
+                    self.paused = (
+                        Torrent.get_torrent(self.downloading[self.content]["infohash"])[
+                            "eta"
+                        ]
+                        == 8640000
+                    )
+                    self.set_downloading()
+            else:
+                self.set_new_episode()
 
     def render(self) -> Panel:
         return Panel(
@@ -85,6 +89,10 @@ class Episode(Widget):
         with open(r"./app/data/downloading.json", "w") as f:
             json.dump(self.downloading, f)
 
+    def set_to_air(self) -> None:
+        self.title = "Releasing"
+        self.string = f"🟣 {self.content}"
+    
     def set_new_episode(self) -> None:
         self.title = "New Episode"
         self.string = f"🔵 {self.content}"
@@ -159,13 +167,17 @@ class Episodes(GridView):
     def on_mount(self) -> None:
         self.episodes = []
         for entry in self.user_list:
+            new_episode = False
             current = entry["media"]["mediaListEntry"]["progress"]
             if entry["media"]["nextAiringEpisode"] is None:
                 latest = entry["media"]["episodes"]
             else:
                 latest = entry["media"]["nextAiringEpisode"]["episode"] - 1
             for i in range(current + 1, latest + 1):
+                new_episode = True
                 self.episodes.append(Episode(entry["media"], i))
+            if not new_episode:
+                self.episodes.append(Episode(entry["media"], latest+1, True))
 
         self.grid.add_column("col")
         self.grid.add_row("row", repeat=len(self.episodes) + 1, size=3)
@@ -187,3 +199,5 @@ class Mono(App):
 
 
 Mono.run(title="Mono", log="textual.log")
+# from rich import print
+# print(get_user_list("CURRENT"))
