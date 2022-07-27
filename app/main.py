@@ -97,8 +97,11 @@ class Episode(Widget):
 
     def set_to_air(self) -> None:
         self.title = "Releasing"
-        self.string = f"🟣 {self.content} {self.air_time}"
-        self.air_time -= datetime.timedelta(seconds=1)
+        if width := self.size.width:
+            self.string = f"🟣 {self.content} {' '*(width-len(str(self.air_time))-len(self.content)-10)} {self.air_time}"
+            self.air_time -= datetime.timedelta(seconds=1)
+        else:
+            self.string = f"🟣 {self.content}"
         self.set_timer(1, self.set_to_air)
 
     def set_new_episode(self) -> None:
