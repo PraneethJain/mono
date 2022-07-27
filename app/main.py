@@ -97,8 +97,8 @@ class Episode(Widget):
 
     def set_to_air(self) -> None:
         self.title = "Releasing"
-        if width := self.size.width:
-            self.string = f"🟣 {self.content} {' '*(width-len(str(self.air_time))-len(self.content)-10)} {self.air_time}"
+        if self.size.width:
+            self.string = self.format(f"🟣 {self.content}", str(self.air_time), 7)
             self.air_time -= datetime.timedelta(seconds=1)
         else:
             self.string = f"🟣 {self.content}"
@@ -168,6 +168,9 @@ class Episode(Widget):
     @staticmethod
     def play(path) -> None:
         subprocess.Popen(path, shell=True)
+
+    def format(self, left: str, right: str, offset: int):
+        return f"{left} {' '*(self.size.width-len(left)-len(right)-offset)} {right}"
 
 
 class Episodes(GridView):
