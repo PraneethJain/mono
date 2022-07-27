@@ -97,15 +97,11 @@ class Episode(Widget):
 
     def set_to_air(self) -> None:
         self.title = "Releasing"
-        if self.size.width:
-            self.string = self.format(f"🟣 {self.content}", str(self.air_time), 7)
-            self.air_time -= datetime.timedelta(seconds=1)
-            if self.air_time.total_seconds < 2:
-                self.set_new_episode()
-            else:
-                self.set_timer(1, self.set_to_air)
+        self.string = self.format(f"🟣 {self.content}", str(self.air_time), 7)
+        self.air_time -= datetime.timedelta(seconds=1)
+        if self.air_time.total_seconds() < 2:
+            self.set_new_episode()
         else:
-            self.string = f"🟣 {self.content}"
             self.set_timer(1, self.set_to_air)
 
     def set_new_episode(self) -> None:
@@ -126,10 +122,10 @@ class Episode(Widget):
 
             if self.paused:
                 self.title = "Downloading : Paused"
-                self.string = f"⚪ {self.content} {progress}%"
+                self.string = self.format(f"⚪ {self.content}", f"{progress}%", 7)
             else:
                 self.title = "Downloading : In Progress"
-                self.string = f"🟠 {self.content} {progress}%"
+                self.string = self.format(f"🟠 {self.content}", f"{progress}%", 7)
 
     def set_downloaded(self) -> None:
         self.title = "Downloaded"
@@ -174,7 +170,11 @@ class Episode(Widget):
         subprocess.Popen(path, shell=True)
 
     def format(self, left: str, right: str, offset: int):
-        return f"{left} {' '*(self.size.width-len(left)-len(right)-offset)} {right}"
+        return (
+            f"{left} {' '*(self.size.width-len(left)-len(right)-offset)} {right}"
+            if self.size.width
+            else left
+        )
 
 
 class Episodes(GridView):
