@@ -1,5 +1,5 @@
 import json
-import os
+import subprocess
 import datetime
 
 from rich.panel import Panel
@@ -77,7 +77,7 @@ class Episode(Widget):
         if self.title == "Downloaded":
             if event.button == 1:
                 self.play(
-                    f"\"{Torrent.get_savepath(self.downloading[self.content]['infohash'])}\\{self.downloading[self.content]['title']}\""
+                    f"{Torrent.get_savepath(self.downloading[self.content]['infohash'])}\\{self.downloading[self.content]['title']}"
                 )
             elif event.button == 3:
                 self.complete()
@@ -163,7 +163,7 @@ class Episode(Widget):
 
     @staticmethod
     def play(path) -> None:
-        os.system(path)
+        subprocess.Popen(path, shell=True)
 
 
 class Episodes(GridView):
