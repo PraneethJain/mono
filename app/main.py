@@ -1,5 +1,6 @@
 import json
 import os
+import datetime
 
 from rich.panel import Panel
 from rich.style import Style
@@ -39,7 +40,11 @@ class Episode(Widget):
         self.ep_num = ep_num
         self.media_id = media["id"]
         self.style = "none"
-        if to_air:
+        self.to_air = to_air
+        if self.to_air:
+            self.air_time = datetime.timedelta(
+                seconds=media["nextAiringEpisode"]["timeUntilAiring"]
+            )
             self.set_to_air()
         else:
             if self.content in self.downloading:
@@ -91,8 +96,10 @@ class Episode(Widget):
 
     def set_to_air(self) -> None:
         self.title = "Releasing"
-        self.string = f"🟣 {self.content}"
-    
+        self.string = f"🟣 {self.content} {self.air_time}"
+        self.air_time -= datetime.timedelta(seconds=1)
+        self.set_timer(1, self.set_to_air)
+
     def set_new_episode(self) -> None:
         self.title = "New Episode"
         self.string = f"🔵 {self.content}"
@@ -177,7 +184,7 @@ class Episodes(GridView):
                 new_episode = True
                 self.episodes.append(Episode(entry["media"], i))
             if not new_episode:
-                self.episodes.append(Episode(entry["media"], latest+1, True))
+                self.episodes.append(Episode(entry["media"], latest + 1, True))
 
         self.grid.add_column("col")
         self.grid.add_row("row", repeat=len(self.episodes) + 1, size=3)
@@ -192,12 +199,11 @@ class Mono(App):
         self.header = Header(style="#FD7F20 on default")
         self.footer = Footer()
         self.user_list = get_user_list("CURRENT")["entries"]
+        self.episodes_view = Episodes(self.user_list)
 
         await self.view.dock(self.header, edge="top")
         await self.view.dock(self.footer, edge="bottom")
-        await self.view.dock(Episodes(self.user_list), edge="top")
+        await self.view.dock(self.episodes_view, edge="top")
 
 
 Mono.run(title="Mono", log="textual.log")
-# from rich import print
-# print(get_user_list("CURRENT"))
