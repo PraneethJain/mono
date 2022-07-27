@@ -47,6 +47,7 @@ class Episode(Widget):
             )
             self.set_to_air()
         else:
+            self.air_time = datetime.timedelta(seconds=0)
             if self.content in self.downloading:
                 if Torrent.is_completed(self.downloading[self.content]["infohash"]):
                     self.set_downloaded()
@@ -96,9 +97,12 @@ class Episode(Widget):
 
     def set_to_air(self) -> None:
         self.title = "Releasing"
-        self.string = f"🟣 {self.content} {self.air_time}"
+        self.string = self.format(f"🟣 {self.content}", str(self.air_time), 7)
         self.air_time -= datetime.timedelta(seconds=1)
-        self.set_timer(1, self.set_to_air)
+        if self.air_time.total_seconds() < 2:
+            self.set_new_episode()
+        else:
+            self.set_timer(1, self.set_to_air)
 
     def set_new_episode(self) -> None:
         self.title = "New Episode"
@@ -118,10 +122,10 @@ class Episode(Widget):
 
             if self.paused:
                 self.title = "Downloading : Paused"
-                self.string = f"⚪ {self.content} {progress}%"
+                self.string = self.format(f"⚪ {self.content}", f"{progress}%", 7)
             else:
                 self.title = "Downloading : In Progress"
-                self.string = f"🟠 {self.content} {progress}%"
+                self.string = self.format(f"🟠 {self.content}", f"{progress}%", 7)
 
     def set_downloaded(self) -> None:
         self.title = "Downloaded"
@@ -165,6 +169,13 @@ class Episode(Widget):
     def play(path) -> None:
         subprocess.Popen(path, shell=True)
 
+    def format(self, left: str, right: str, offset: int):
+        return (
+            f"{left} {' '*(self.size.width-len(left)-len(right)-offset)} {right}"
+            if self.size.width
+            else left
+        )
+
 
 class Episodes(GridView):
     def __init__(self, user_list, layout=None, name: str | None = None) -> None:
@@ -185,6 +196,8 @@ class Episodes(GridView):
                 self.episodes.append(Episode(entry["media"], i))
             if not new_episode:
                 self.episodes.append(Episode(entry["media"], latest + 1, True))
+
+        self.episodes.sort(key=lambda episode: episode.air_time)
 
         self.grid.add_column("col")
         self.grid.add_row("row", repeat=len(self.episodes) + 1, size=3)
