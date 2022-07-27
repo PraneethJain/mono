@@ -47,6 +47,7 @@ class Episode(Widget):
             )
             self.set_to_air()
         else:
+            self.air_time = datetime.timedelta(seconds=0)
             if self.content in self.downloading:
                 if Torrent.is_completed(self.downloading[self.content]["infohash"]):
                     self.set_downloaded()
@@ -185,6 +186,8 @@ class Episodes(GridView):
                 self.episodes.append(Episode(entry["media"], i))
             if not new_episode:
                 self.episodes.append(Episode(entry["media"], latest + 1, True))
+
+        self.episodes.sort(key=lambda episode: episode.air_time)
 
         self.grid.add_column("col")
         self.grid.add_row("row", repeat=len(self.episodes) + 1, size=3)
