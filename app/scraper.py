@@ -33,6 +33,8 @@ def find_magnet(title: str):
         return options["Erai-raws"]["1080p"]
     else:
         temp = title.split()
+        if len(temp) < 5:
+            return None
         temp.pop(-3)
         title = " ".join(temp)
         return find_magnet(title)
