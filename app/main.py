@@ -100,9 +100,13 @@ class Episode(Widget):
         if self.size.width:
             self.string = self.format(f"🟣 {self.content}", str(self.air_time), 7)
             self.air_time -= datetime.timedelta(seconds=1)
+            if self.air_time.total_seconds < 2:
+                self.set_new_episode()
+            else:
+                self.set_timer(1, self.set_to_air)
         else:
             self.string = f"🟣 {self.content}"
-        self.set_timer(1, self.set_to_air)
+            self.set_timer(1, self.set_to_air)
 
     def set_new_episode(self) -> None:
         self.title = "New Episode"
