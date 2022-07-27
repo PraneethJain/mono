@@ -1,7 +1,7 @@
 from .authenticate import get_headers
+from datetime import timedelta
 import requests
 import json
-from rich import print
 
 url = "https://graphql.anilist.co"
 
@@ -73,3 +73,20 @@ def get_user_list(status: str):
         url, json={"query": query, "variables": variables}, headers=get_headers()
     )
     return json.loads(data.text)["data"]["MediaListCollection"]["lists"][0]
+
+
+def get_air_time(mediaId: int, ep_num: int):
+    query = """
+    query ($mediaId: Int, $episode: Int) {
+        AiringSchedule (mediaId: $mediaId, episode: $episode) {
+            timeUntilAiring
+        }
+    }
+    """
+    variables = {"mediaId": mediaId, "episode": ep_num}
+    data = requests.post(
+        url, json={"query": query, "variables": variables}, headers=get_headers()
+    )
+    return timedelta(
+        seconds=json.loads(data.text)["data"]["AiringSchedule"]["timeUntilAiring"]
+    )
