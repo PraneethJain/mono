@@ -60,6 +60,7 @@ def get_user_list(status: str):
                         }
                         nextAiringEpisode {
                             airingAt
+                            timeUntilAiring
                             episode
                         }
                     }
