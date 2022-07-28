@@ -76,7 +76,7 @@ class Episode(Widget):
 
     async def on_resize(self, event) -> None:
         if self.to_air:
-            self.set_to_air()
+            self.set_to_air(to_loop=False)
         elif "Downloading" in self.title:
             self.set_downloading()
         return await super().on_resize(event)
@@ -103,13 +103,13 @@ class Episode(Widget):
         with open(r"./app/data/downloading.json", "w") as f:
             json.dump(self.downloading, f)
 
-    def set_to_air(self) -> None:
+    def set_to_air(self, to_loop: bool = True) -> None:
         self.title = "Releasing"
         self.string = self.format(f"🟣 {self.content}", str(self.air_time), 7)
-        self.air_time -= datetime.timedelta(seconds=1)
         if self.air_time.total_seconds() < 2:
             self.set_new_episode()
-        else:
+        elif to_loop:
+            self.air_time -= datetime.timedelta(seconds=1)
             self.set_timer(1, self.set_to_air)
 
     def set_new_episode(self) -> None:
