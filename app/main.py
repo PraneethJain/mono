@@ -74,6 +74,13 @@ class Episode(Widget):
     def on_leave(self):
         pass
 
+    async def on_resize(self, event) -> None:
+        if self.to_air:
+            self.set_to_air()
+        elif "Downloading" in self.title:
+            self.set_downloading()
+        return await super().on_resize(event)
+
     def on_click(self, event) -> None:
 
         if self.title == "Downloaded":
