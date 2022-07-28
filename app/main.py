@@ -1,6 +1,7 @@
 import json
 import subprocess
 import datetime
+import os
 
 from rich.panel import Panel
 from rich.style import Style
@@ -170,11 +171,7 @@ class Episode(Widget):
         subprocess.Popen(path, shell=True)
 
     def format(self, left: str, right: str, offset: int):
-        return (
-            f"{left} {' '*(self.size.width-len(left)-len(right)-offset)} {right}"
-            if self.size.width
-            else left
-        )
+        return f"{left} {' '*(os.get_terminal_size().columns-len(left)-len(right)-offset)} {right}"
 
 
 class Episodes(GridView):
