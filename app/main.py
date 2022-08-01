@@ -101,7 +101,7 @@ class Episode(Widget):
     def set_to_air(self, to_loop: bool = True) -> None:
         right_style = Style(color="#F47068")
         left_style = Style(color="#FFB3AE")
-        self.style = "#0E606B"
+        self.style = Style(color="#0E606B")
         self.title = "[#1697A6]Releasing"
         self.string = Columns(
             [
@@ -132,25 +132,20 @@ class Episode(Widget):
 
             self.set_timer(1, self.set_downloading)
 
-            if self.paused:
-                self.title = "Downloading : Paused"
-                self.string = Columns(
-                    [
-                        Align(f"⚪ {self.content}", align="left"),
-                        Align(f"{progress}%", align="right"),
-                    ],
-                    expand=True,
-                )
+            left_style = Style(color="#F4A261")
+            right_style = Style(color="#E76F51")
+            self.style = Style(color="#264653")
 
-            else:
-                self.title = "Downloading : In Progress"
-                self.string = Columns(
-                    [
-                        Align(f"🟠 {self.content}", align="left"),
-                        Align(f"{progress}%", align="right"),
-                    ],
-                    expand=True,
-                )
+            self.title = (
+                f"[#2A9D8F]Downloading : {'Paused' if self.paused else 'In Progress'}"
+            )
+            self.string = Columns(
+                [
+                    Align(f"{self.content}", align="left", style=left_style),
+                    Align(f"{progress}%", align="right", style=right_style),
+                ],
+                expand=True,
+            )
 
     def set_downloaded(self) -> None:
         self.title = "Downloaded"
