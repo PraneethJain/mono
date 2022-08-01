@@ -101,9 +101,9 @@ class Episode(Widget):
             case States.COMPLETED:
                 self.uncomplete()
             case States.DOWNLOADING_IN_PROGRESS:
-                self.pause_resume()
+                self.pause()
             case States.DOWNLOADING_PAUSED:
-                self.pause_resume()
+                self.resume()
             case States.NEW_EPISODE:
                 self.download()
 
@@ -139,7 +139,7 @@ class Episode(Widget):
         self.string = f"[#42e2b8] {self.content}"
         self.style = Style(color="#00b4d8")
 
-    def set_downloading(self) -> None:
+    def set_downloading(self, to_loop=True) -> None:
         if Torrent.is_completed(self.downloading[self.content]["infohash"]):
             if self.title != "Completed":
                 self.set_downloaded()
@@ -155,7 +155,8 @@ class Episode(Widget):
             if progress > 100:
                 progress = 100
 
-            self.set_timer(1, self.set_downloading)
+            if to_loop:
+                self.set_timer(1, self.set_downloading)
 
             left_style = Style(color="#F4A261")
             right_style = Style(color="#E76F51")
@@ -201,16 +202,15 @@ class Episode(Widget):
             self.paused = False
             self.set_downloading()
 
-    def pause_resume(self) -> None:
-        self.paused = not self.paused
-        if self.paused:
-            self.title = "Downloading : Paused"
-            self.state = States.DOWNLOADING_PAUSED
-            Torrent.pause_torrent(self.downloading[self.content]["infohash"])
-        else:
-            self.title = "Downloading : In Progress"
-            self.state = States.DOWNLOADING_IN_PROGRESS
-            Torrent.resume_torrent(self.downloading[self.content]["infohash"])
+    def pause(self) -> None:
+        Torrent.pause_torrent(self.downloading[self.content]["infohash"])
+        self.paused = True
+        self.set_downloading(to_loop=False)
+
+    def resume(self) -> None:
+        Torrent.resume_torrent(self.downloading[self.content]["infohash"])
+        self.paused = False
+        self.set_downloading(to_loop=False)
 
     def complete(self) -> None:
         set_progress(self.media_id, self.ep_num)
