@@ -9,6 +9,7 @@ from rich.align import Align
 from rich.style import Style
 
 from textual.app import App
+from textual.geometry import clamp
 from textual.reactive import Reactive
 from textual.widget import Widget
 from textual.widgets import Header, Footer
@@ -151,9 +152,9 @@ class Episode(Widget):
                 else States.DOWNLOADING_IN_PROGRESS
             )
 
-            progress = Torrent.get_progress(self.downloading[self.content]["infohash"])
-            if progress > 100:
-                progress = 100
+            progress = clamp(
+                Torrent.get_progress(self.downloading[self.content]["infohash"]), 0, 100
+            )
 
             if to_loop:
                 self.set_timer(1, self.set_downloading)
