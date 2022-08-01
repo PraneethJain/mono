@@ -5,6 +5,7 @@ import datetime
 from rich.panel import Panel
 from rich.columns import Columns
 from rich.align import Align
+from rich.style import Style
 
 from textual.app import App
 from textual.reactive import Reactive
@@ -37,8 +38,9 @@ class Episode(Widget):
 
         super().__init__(name)
 
-        self.content = f"{media['title']['romaji']} Ep {ep_num}".replace(":", "")
+        self.series = media["title"]["romaji"].replace(":", "")
         self.ep_num = ep_num
+        self.content = f"{self.series} - {self.ep_num:02}"
         self.media_id = media["id"]
         self.style = "none"
         self.to_air = to_air
@@ -97,11 +99,14 @@ class Episode(Widget):
             json.dump(self.downloading, f)
 
     def set_to_air(self, to_loop: bool = True) -> None:
-        self.title = "Releasing"
+        right_style = Style(color="#F47068")
+        left_style = Style(color="#FFB3AE")
+        self.style = "#0E606B"
+        self.title = "[#1697A6]Releasing"
         self.string = Columns(
             [
-                Align(f"🟣 {self.content}", align="left"),
-                Align(str(self.air_time), align="right"),
+                Align(f"{self.content}", align="left", style=left_style),
+                Align(str(self.air_time), align="right", style=right_style),
             ],
             expand=True,
         )
