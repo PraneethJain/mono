@@ -148,8 +148,9 @@ class Episode(Widget):
             )
 
     def set_downloaded(self) -> None:
-        self.title = "Downloaded"
-        self.string = f"🟢 {self.content}"
+        self.title = "[#118ab2]Downloaded"
+        self.string = f"[#06d6a0]{self.content}"
+        self.style = Style(color="#2a9d8f")
 
     def set_completed(self) -> None:
         self.string = f"🟡 {self.content}"
