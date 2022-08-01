@@ -1,10 +1,10 @@
 import json
 import subprocess
 import datetime
-import os
 
 from rich.panel import Panel
-from rich.style import Style
+from rich.columns import Columns
+from rich.align import Align
 
 from textual.app import App
 from textual.reactive import Reactive
@@ -74,13 +74,6 @@ class Episode(Widget):
     def on_leave(self):
         pass
 
-    async def on_resize(self, event) -> None:
-        if self.to_air:
-            self.set_to_air(to_loop=False)
-        elif "Downloading" in self.title:
-            self.set_downloading()
-        return await super().on_resize(event)
-
     def on_click(self, event) -> None:
 
         if self.title == "Downloaded":
@@ -105,7 +98,13 @@ class Episode(Widget):
 
     def set_to_air(self, to_loop: bool = True) -> None:
         self.title = "Releasing"
-        self.string = self.format(f"🟣 {self.content}", str(self.air_time), 7)
+        self.string = Columns(
+            [
+                Align(f"🟣 {self.content}", align="left"),
+                Align(str(self.air_time), align="right"),
+            ],
+            expand=True,
+        )
         if self.air_time.total_seconds() < 2:
             self.set_new_episode()
         elif to_loop:
@@ -130,10 +129,23 @@ class Episode(Widget):
 
             if self.paused:
                 self.title = "Downloading : Paused"
-                self.string = self.format(f"⚪ {self.content}", f"{progress}%", 7)
+                self.string = Columns(
+                    [
+                        Align(f"⚪ {self.content}", align="left"),
+                        Align(f"{progress}%", align="right"),
+                    ],
+                    expand=True,
+                )
+
             else:
                 self.title = "Downloading : In Progress"
-                self.string = self.format(f"🟠 {self.content}", f"{progress}%", 7)
+                self.string = Columns(
+                    [
+                        Align(f"🟠 {self.content}", align="left"),
+                        Align(f"{progress}%", align="right"),
+                    ],
+                    expand=True,
+                )
 
     def set_downloaded(self) -> None:
         self.title = "Downloaded"
@@ -176,9 +188,6 @@ class Episode(Widget):
     @staticmethod
     def play(path) -> None:
         subprocess.Popen(path, shell=True)
-
-    def format(self, left: str, right: str, offset: int):
-        return f"{left} {' '*(os.get_terminal_size().columns-len(left)-len(right)-offset)} {right}"
 
 
 class Episodes(GridView):
