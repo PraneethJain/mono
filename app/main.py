@@ -1,6 +1,7 @@
 import json
 import subprocess
 import datetime
+from enum import Enum, auto
 
 from rich.panel import Panel
 from rich.columns import Columns
@@ -17,6 +18,15 @@ from anilist.query import get_user_list
 from anilist.mutation import set_progress
 from scraper import find_magnet
 from downloader import Torrent
+
+
+class States(Enum):
+    TO_AIR = auto()
+    NEW_EPISODE = auto()
+    DOWNLOADING_PAUSED = auto()
+    DOWNLOADING_IN_PROGRESS = auto()
+    DOWNLOADED = auto()
+    COMPLETED = auto()
 
 
 class Episode(Widget):
@@ -78,27 +88,32 @@ class Episode(Widget):
 
     def on_click(self, event) -> None:
 
-        if self.title == "Downloaded":
-            if event.button == 1:
-                self.play(
-                    f"{Torrent.get_savepath(self.downloading[self.content]['infohash'])}\\{self.downloading[self.content]['title']}"
-                )
-            elif event.button == 3:
-                self.complete()
+        match self.state:
 
-        elif self.title == "Completed":
-            self.uncomplete()
+            case States.DOWNLOADED:
+                if event.button == 1:
+                    self.play(
+                        f"{Torrent.get_savepath(self.downloading[self.content]['infohash'])}\\{self.downloading[self.content]['title']}"
+                    )
+                elif event.button == 3:
+                    self.complete()
 
-        elif "Downloading" in self.title:
-            self.pause_resume()
-
-        elif self.title == "New Episode":
-            self.download()
+            case States.COMPLETED:
+                self.uncomplete()
+            case States.DOWNLOADING_IN_PROGRESS:
+                self.pause_resume()
+            case States.DOWNLOADING_PAUSED:
+                self.pause_resume()
+            case States.NEW_EPISODE:
+                self.download()
 
         with open(r"./app/data/downloading.json", "w") as f:
             json.dump(self.downloading, f)
 
     def set_to_air(self, to_loop: bool = True) -> None:
+
+        self.state = States.TO_AIR
+
         right_style = Style(color="#F47068")
         left_style = Style(color="#FFB3AE")
         self.style = Style(color="#0E606B")
@@ -117,14 +132,24 @@ class Episode(Widget):
             self.set_timer(1, self.set_to_air)
 
     def set_new_episode(self) -> None:
-        self.title = "New Episode"
-        self.string = f"🔵 {self.content}"
+
+        self.state = States.NEW_EPISODE
+
+        self.title = "[#2d82b7]New Episode"
+        self.string = f"[#42e2b8] {self.content}"
+        self.style = Style(color="#00b4d8")
 
     def set_downloading(self) -> None:
         if Torrent.is_completed(self.downloading[self.content]["infohash"]):
             if self.title != "Completed":
                 self.set_downloaded()
         else:
+
+            self.state = (
+                States.DOWNLOADING_PAUSED
+                if self.paused
+                else States.DOWNLOADING_IN_PROGRESS
+            )
 
             progress = Torrent.get_progress(self.downloading[self.content]["infohash"])
             if progress > 100:
@@ -148,13 +173,20 @@ class Episode(Widget):
             )
 
     def set_downloaded(self) -> None:
+
+        self.state = States.DOWNLOADED
+
         self.title = "[#118ab2]Downloaded"
         self.string = f"[#06d6a0]{self.content}"
         self.style = Style(color="#2a9d8f")
 
     def set_completed(self) -> None:
-        self.string = f"🟡 {self.content}"
-        self.title = "Completed"
+
+        self.state = States.COMPLETED
+
+        self.string = f"[#42bfdd]{self.content}"
+        self.title = "[#bbe6e4]Completed"
+        self.style = Style(color="#084b83")
 
     def download(self) -> None:
         title, magnet = find_magnet(self.content)
@@ -173,9 +205,11 @@ class Episode(Widget):
         self.paused = not self.paused
         if self.paused:
             self.title = "Downloading : Paused"
+            self.state = States.DOWNLOADING_PAUSED
             Torrent.pause_torrent(self.downloading[self.content]["infohash"])
         else:
             self.title = "Downloading : In Progress"
+            self.state = States.DOWNLOADING_IN_PROGRESS
             Torrent.resume_torrent(self.downloading[self.content]["infohash"])
 
     def complete(self) -> None:
