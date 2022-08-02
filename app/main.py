@@ -7,6 +7,9 @@ from rich.panel import Panel
 from rich.columns import Columns
 from rich.align import Align
 from rich.style import Style
+from rich.styled import Styled
+from rich.console import RenderableType
+from rich.text import Text
 
 from textual.app import App
 from textual.geometry import clamp
@@ -32,9 +35,9 @@ class States(Enum):
 
 class Episode(Widget):
 
-    string = Reactive("")
-    style = Reactive("none")
-    title = Reactive("none")
+    renderable = Reactive(RenderableType)
+    style = Reactive(Style())
+    title = Reactive(Text())
 
     with open(r"./app/data/downloading.json", "r") as f:
         downloading = json.load(f)
@@ -53,7 +56,6 @@ class Episode(Widget):
         self.ep_num = ep_num
         self.content = f"{self.series} - {self.ep_num:02}"
         self.media_id = media["id"]
-        self.style = "none"
         self.to_air = to_air
         if self.to_air:
             self.air_time = datetime.timedelta(
@@ -66,27 +68,20 @@ class Episode(Widget):
                 if Torrent.is_completed(self.downloading[self.content]["infohash"]):
                     self.set_downloaded()
                 else:
-                    self.paused = (
-                        Torrent.get_torrent(self.downloading[self.content]["infohash"])[
-                            "eta"
-                        ]
-                        == 8640000
-                    )
                     self.set_downloading()
             else:
                 self.set_new_episode()
 
     def render(self) -> Panel:
         return Panel(
-            self.string, style=self.style, title=self.title, title_align="left"
+            self.renderable, style=self.style, title=self.title, title_align="left"
         )
 
     def on_enter(self):
-        self.last_style = self.style
-        self.style = Style(bgcolor="#232323")
+        self.style += Style(bgcolor="#232323")
 
     def on_leave(self):
-        self.style = self.last_style
+        self.style += Style(bgcolor="default")
 
     def on_click(self, event) -> None:
 
@@ -118,12 +113,12 @@ class Episode(Widget):
 
         self.to_air_right_style = Style(color="#F47068")
         self.to_air_left_style = Style(color="#FFB3AE")
-        self.style = Style(color="#0E606B")
-        self.title = "[#1697A6]Releasing"
+        self.style = Style(color="#2a9d8f")
+        self.title = Text("Releasing")
         self.update_to_air()
 
     def update_to_air(self, loop=True) -> None:
-        self.string = Columns(
+        self.renderable = Columns(
             [
                 Align(f"{self.content}", align="left", style=self.to_air_left_style),
                 Align(str(self.air_time), align="right", style=self.to_air_right_style),
@@ -140,18 +135,21 @@ class Episode(Widget):
 
         self.state = States.NEW_EPISODE
 
-        self.title = "[#2d82b7]New Episode"
-        self.string = f"[#42e2b8] {self.content}"
+        self.title = Text("New Episode")
+        self.renderable = Styled(self.content, Style(color="#42e2b8"))
         self.style = Style(color="#00b4d8")
 
     def set_downloading(self) -> None:
 
         self.state = States.DOWNLOADING_IN_PROGRESS
 
-        self.paused = False
+        self.paused = (
+            Torrent.get_torrent(self.downloading[self.content]["infohash"])["eta"]
+            == 8640000
+        )
         self.downloading_left_style = Style(color="#F4A261")
         self.downloading_right_style = Style(color="#E76F51")
-        self.style = Style(color="#264653")
+        self.style = Style(color="#219ebc")
         self.update_downloading()
 
     def update_downloading(self, loop=True) -> None:
@@ -166,10 +164,10 @@ class Episode(Widget):
             progress = clamp(
                 Torrent.get_progress(self.downloading[self.content]["infohash"]), 0, 100
             )
-            self.title = (
-                f"[#2A9D8F]Downloading : {'Paused' if self.paused else 'In Progress'}"
+            self.title = Text(
+                f"Downloading : {'Paused' if self.paused else 'In Progress'}"
             )
-            self.string = Columns(
+            self.renderable = Columns(
                 [
                     Align(
                         f"{self.content}",
@@ -192,17 +190,17 @@ class Episode(Widget):
 
         self.state = States.DOWNLOADED
 
-        self.title = "[#118ab2]Downloaded"
-        self.string = f"[#06d6a0]{self.content}"
-        self.style = Style(color="#2a9d8f")
+        self.title = Text("Downloaded")
+        self.renderable = Styled(self.content, Style(color="#06d6a0"))
+        self.style = Style(color="#0096c7")
 
     def set_completed(self) -> None:
 
         self.state = States.COMPLETED
 
-        self.string = f"[#42bfdd]{self.content}"
-        self.title = "[#bbe6e4]Completed"
-        self.style = Style(color="#084b83")
+        self.renderable = Styled(self.content, Style(color="#42bfdd"))
+        self.title = Text("Completed")
+        self.style = Style(color="#48cae4")
 
     def download(self) -> None:
         title, magnet = find_magnet(self.content)
