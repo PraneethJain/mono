@@ -115,22 +115,25 @@ class Episode(Widget):
 
         self.state = States.TO_AIR
 
-        right_style = Style(color="#F47068")
-        left_style = Style(color="#FFB3AE")
+        self.to_air_right_style = Style(color="#F47068")
+        self.to_air_left_style = Style(color="#FFB3AE")
         self.style = Style(color="#0E606B")
         self.title = "[#1697A6]Releasing"
+        self.update_to_air()
+
+    def update_to_air(self, loop=True) -> None:
         self.string = Columns(
             [
-                Align(f"{self.content}", align="left", style=left_style),
-                Align(str(self.air_time), align="right", style=right_style),
+                Align(f"{self.content}", align="left", style=self.to_air_left_style),
+                Align(str(self.air_time), align="right", style=self.to_air_right_style),
             ],
             expand=True,
         )
         if self.air_time.total_seconds() < 2:
             self.set_new_episode()
-        elif to_loop:
+        elif loop:
             self.air_time -= datetime.timedelta(seconds=1)
-            self.set_timer(1, self.set_to_air)
+            self.set_timer(1, self.update_to_air)
 
     def set_new_episode(self) -> None:
 
