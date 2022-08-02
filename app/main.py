@@ -260,7 +260,8 @@ class Episodes(GridView):
         self.episodes.sort(key=lambda episode: episode.air_time)
 
         self.grid.add_column("col")
-        self.grid.add_row("row", repeat=len(self.episodes) + 1, size=3)
+        self.grid.add_row("row", size=3)
+        self.grid.set_repeat(False, True)
         self.grid.place(*self.episodes)
 
 
