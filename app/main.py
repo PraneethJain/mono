@@ -65,7 +65,9 @@ class Episode(Widget):
         else:
             self.air_time = datetime.timedelta(seconds=0)
             if self.content in self.downloading:
-                if Torrent.is_completed(self.downloading[self.content]["infohash"]):
+                self.infohash = self.downloading[self.content]["infohash"]
+                self.ep_title = self.downloading[self.content]["title"]
+                if Torrent.is_completed(self.infohash):
                     self.set_downloaded()
                 else:
                     self.set_downloading()
@@ -89,9 +91,7 @@ class Episode(Widget):
 
             case States.DOWNLOADED:
                 if event.button == 1:
-                    self.play(
-                        f"{Torrent.get_savepath(self.downloading[self.content]['infohash'])}\\{self.downloading[self.content]['title']}"
-                    )
+                    self.play(f"{Torrent.get_savepath(self.infohash)}\\{self.ep_title}")
                 elif event.button == 3:
                     self.complete()
 
@@ -143,17 +143,14 @@ class Episode(Widget):
 
         self.state = States.DOWNLOADING_IN_PROGRESS
 
-        self.paused = (
-            Torrent.get_torrent(self.downloading[self.content]["infohash"])["eta"]
-            == 8640000
-        )
+        self.paused = Torrent.get_torrent(self.infohash)["eta"] == 8640000
         self.downloading_left_style = Style(color="#F4A261")
         self.downloading_right_style = Style(color="#E76F51")
         self.style = Style(color="#219ebc")
         self.update_downloading()
 
     def update_downloading(self, loop=True) -> None:
-        if Torrent.is_completed(self.downloading[self.content]["infohash"]):
+        if Torrent.is_completed(self.infohash):
             self.set_downloaded()
         else:
             self.state = (
@@ -161,9 +158,7 @@ class Episode(Widget):
                 if self.paused
                 else States.DOWNLOADING_IN_PROGRESS
             )
-            progress = clamp(
-                Torrent.get_progress(self.downloading[self.content]["infohash"]), 0, 100
-            )
+            progress = clamp(Torrent.get_progress(self.infohash), 0, 100)
             self.title = Text(
                 f"Downloading : {'Paused' if self.paused else 'In Progress'}"
             )
@@ -197,7 +192,7 @@ class Episode(Widget):
     def set_completed(self) -> None:
 
         self.state = States.COMPLETED
-
+        self.downloading.pop(self.content)
         self.renderable = Styled(self.content, Style(color="#42bfdd"))
         self.title = Text("Completed")
         self.style = Style(color="#48cae4")
@@ -208,19 +203,20 @@ class Episode(Widget):
         self.torrent = Torrent(series, magnet)
 
         if self.content not in self.downloading:
+            self.infohash = self.torrent.get_infohash()
+            self.ep_title = title
             self.downloading[self.content] = {
                 "infohash": self.torrent.get_infohash(),
                 "title": title,
             }
-            self.set_downloading()
 
     def pause(self) -> None:
-        Torrent.pause_torrent(self.downloading[self.content]["infohash"])
+        Torrent.pause_torrent(self.infohash)
         self.paused = True
         self.update_downloading(loop=False)
 
     def resume(self) -> None:
-        Torrent.resume_torrent(self.downloading[self.content]["infohash"])
+        Torrent.resume_torrent(self.infohash)
         self.paused = False
         self.update_downloading(loop=False)
 
@@ -230,6 +226,10 @@ class Episode(Widget):
 
     def uncomplete(self) -> None:
         set_progress(self.media_id, self.ep_num - 1)
+        self.downloading[self.content] = {
+            "infohash": self.infohash,
+            "title": self.ep_title,
+        }
         self.set_downloaded()
 
     @staticmethod
