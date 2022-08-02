@@ -111,7 +111,7 @@ class Episode(Widget):
         with open(r"./app/data/downloading.json", "w") as f:
             json.dump(self.downloading, f)
 
-    def set_to_air(self, to_loop: bool = True) -> None:
+    def set_to_air(self) -> None:
 
         self.state = States.TO_AIR
 
@@ -143,39 +143,49 @@ class Episode(Widget):
         self.string = f"[#42e2b8] {self.content}"
         self.style = Style(color="#00b4d8")
 
-    def set_downloading(self, to_loop=True) -> None:
-        if Torrent.is_completed(self.downloading[self.content]["infohash"]):
-            if self.title != "Completed":
-                self.set_downloaded()
-        else:
+    def set_downloading(self) -> None:
 
+        self.state = States.DOWNLOADING_IN_PROGRESS
+
+        self.paused = False
+        self.downloading_left_style = Style(color="#F4A261")
+        self.downloading_right_style = Style(color="#E76F51")
+        self.style = Style(color="#264653")
+        self.update_downloading()
+
+    def update_downloading(self, loop=True) -> None:
+        if Torrent.is_completed(self.downloading[self.content]["infohash"]):
+            self.set_downloaded()
+        else:
             self.state = (
                 States.DOWNLOADING_PAUSED
                 if self.paused
                 else States.DOWNLOADING_IN_PROGRESS
             )
-
             progress = clamp(
                 Torrent.get_progress(self.downloading[self.content]["infohash"]), 0, 100
             )
-
-            if to_loop:
-                self.set_timer(1, self.set_downloading)
-
-            left_style = Style(color="#F4A261")
-            right_style = Style(color="#E76F51")
-            self.style = Style(color="#264653")
-
             self.title = (
                 f"[#2A9D8F]Downloading : {'Paused' if self.paused else 'In Progress'}"
             )
             self.string = Columns(
                 [
-                    Align(f"{self.content}", align="left", style=left_style),
-                    Align(f"{progress}%", align="right", style=right_style),
+                    Align(
+                        f"{self.content}",
+                        align="left",
+                        style=self.downloading_left_style,
+                    ),
+                    Align(
+                        f"{progress}%",
+                        align="right",
+                        style=self.downloading_right_style,
+                    ),
                 ],
                 expand=True,
             )
+
+            if loop:
+                self.set_timer(1, self.update_downloading)
 
     def set_downloaded(self) -> None:
 
@@ -203,18 +213,17 @@ class Episode(Widget):
                 "infohash": self.torrent.get_infohash(),
                 "title": title,
             }
-            self.paused = False
             self.set_downloading()
 
     def pause(self) -> None:
         Torrent.pause_torrent(self.downloading[self.content]["infohash"])
         self.paused = True
-        self.set_downloading(to_loop=False)
+        self.update_downloading(loop=False)
 
     def resume(self) -> None:
         Torrent.resume_torrent(self.downloading[self.content]["infohash"])
         self.paused = False
-        self.set_downloading(to_loop=False)
+        self.update_downloading(loop=False)
 
     def complete(self) -> None:
         set_progress(self.media_id, self.ep_num)
