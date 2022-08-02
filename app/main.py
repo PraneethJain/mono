@@ -82,10 +82,11 @@ class Episode(Widget):
         )
 
     def on_enter(self):
-        pass
+        self.last_style = self.style
+        self.style = Style(bgcolor="#232323")
 
     def on_leave(self):
-        pass
+        self.style = self.last_style
 
     def on_click(self, event) -> None:
 
