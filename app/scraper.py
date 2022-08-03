@@ -1,11 +1,13 @@
-from requests import get
+import httpx
 from bs4 import BeautifulSoup
 
 
-def find_magnet(title: str):
+async def find_magnet(title: str):
     title = title.replace("2nd Season", "S2")
     url = f"https://www.tokyotosho.info/rss.php?terms={title.replace(' ','+')}&type=1&searchName=true&searchComment=true&size_min=&size_max=&username="
-    soup = BeautifulSoup(get(url).text, "xml")
+    async with httpx.AsyncClient() as client:
+        r = await client.get(url)
+    soup = BeautifulSoup(r.text, "xml")
     options = {}
     for item in soup.find_all("item"):
         if item.category.text == "Anime":
