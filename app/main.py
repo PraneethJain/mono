@@ -1,3 +1,4 @@
+import asyncio
 import json
 import subprocess
 import datetime
@@ -80,13 +81,13 @@ class Episode(Widget):
             self.renderable, style=self.style, title=self.title, title_align="left"
         )
 
-    def on_enter(self):
+    async def on_enter(self):
         self.style += Style(bgcolor="#232323")
 
-    def on_leave(self):
+    async def on_leave(self):
         self.style += Style(bgcolor="default")
 
-    def on_click(self, event) -> None:
+    async def on_click(self, event) -> None:
 
         match self.state:
 
@@ -103,7 +104,7 @@ class Episode(Widget):
             case States.DOWNLOADING_PAUSED:
                 self.resume()
             case States.NEW_EPISODE:
-                self.download()
+                await self.download()
 
         with open(r"./app/data/downloading.json", "w") as f:
             json.dump(self.downloading, f)
@@ -197,8 +198,8 @@ class Episode(Widget):
         self.title = Text("Completed")
         self.style = Style(color="#48cae4")
 
-    def download(self) -> None:
-        title, magnet = find_magnet(self.content)
+    async def download(self) -> None:
+        title, magnet = await find_magnet(self.content)
         series = " ".join(self.content.split()[:-2])
         self.torrent = Torrent(series, magnet)
 
