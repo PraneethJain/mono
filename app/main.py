@@ -70,6 +70,7 @@ class Episode(Widget):
                 if Torrent.is_completed(self.infohash):
                     self.set_downloaded()
                 else:
+                    self.paused = Torrent.get_torrent(self.infohash)["eta"] == 8640000
                     self.set_downloading()
             else:
                 self.set_new_episode()
@@ -143,7 +144,6 @@ class Episode(Widget):
 
         self.state = States.DOWNLOADING_IN_PROGRESS
 
-        self.paused = Torrent.get_torrent(self.infohash)["eta"] == 8640000
         self.downloading_left_style = Style(color="#F4A261")
         self.downloading_right_style = Style(color="#E76F51")
         self.style = Style(color="#219ebc")
@@ -209,6 +209,8 @@ class Episode(Widget):
                 "infohash": self.torrent.get_infohash(),
                 "title": title,
             }
+            self.paused = False
+            self.set_downloading()
 
     def pause(self) -> None:
         Torrent.pause_torrent(self.infohash)
