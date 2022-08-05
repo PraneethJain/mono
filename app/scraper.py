@@ -38,4 +38,4 @@ async def find_magnet(title: str):
             return None
         temp.pop(-3)
         title = " ".join(temp)
-        return find_magnet(title)
+        return await find_magnet(title)
