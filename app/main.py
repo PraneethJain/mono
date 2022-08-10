@@ -1,4 +1,3 @@
-import asyncio
 import json
 import subprocess
 import datetime
@@ -21,6 +20,7 @@ from textual.views._grid_view import GridView
 
 from anilist.query import get_user_list
 from anilist.mutation import set_progress
+from anilist.authenticate import get_token
 from scraper import find_magnet
 from downloader import Torrent
 
@@ -283,4 +283,11 @@ class Mono(App):
         await self.view.dock(self.episodes_view, edge="top")
 
 
-Mono.run(title="Mono", log="textual.log")
+if __name__ == "__main__":
+    with open("app/config.json") as f:
+        config: dict = json.load(f)
+    if "access_token" not in config:
+        config["access_token"] = get_token()
+        with open("app/config.json", "w") as f:
+            json.dump(config, f)
+    Mono.run(title="Mono", log="textual.log")
