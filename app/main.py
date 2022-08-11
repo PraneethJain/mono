@@ -247,13 +247,9 @@ class Episode(Widget):
 
 
 class Episodes(GridView):
-    def __init__(self, user_list, layout=None, name: str | None = None) -> None:
-        super().__init__(layout, name)
-        self.user_list = user_list
-
     def on_mount(self) -> None:
         self.episodes = []
-        for entry in self.user_list:
+        for entry in get_user_list("CURRENT")["entries"]:
             new_episode = False
             current = entry["media"]["mediaListEntry"]["progress"]
             if entry["media"]["nextAiringEpisode"] is None:
@@ -281,8 +277,7 @@ class Mono(App):
     async def on_mount(self, event) -> None:
         self.header = Header(style="#FD7F20 on default")
         self.footer = Footer()
-        self.user_list = get_user_list("CURRENT")["entries"]
-        self.episodes_view = Episodes(self.user_list)
+        self.episodes_view = Episodes()
 
         await self.view.dock(self.header, edge="top")
         await self.view.dock(self.footer, edge="bottom")
