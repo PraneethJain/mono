@@ -12,7 +12,7 @@ def get_token():
 
 
 def get_headers():
-    with open("app/config.json") as f:
+    with open("app/data/config.json") as f:
         TOKEN: str = json.load(f)["access_token"]
     return {
         "Authorization": "Bearer " + TOKEN,

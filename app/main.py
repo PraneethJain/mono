@@ -290,10 +290,10 @@ class Mono(App):
 
 
 if __name__ == "__main__":
-    with open("app/config.json") as f:
+    with open("app/data/config.json") as f:
         config: dict = json.load(f)
     if "access_token" not in config:
         config["access_token"] = get_token()
-        with open("app/config.json", "w") as f:
+        with open("app/data/config.json", "w") as f:
             json.dump(config, f)
     Mono.run(title="Mono", log="textual.log")
