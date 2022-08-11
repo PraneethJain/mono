@@ -1,6 +1,8 @@
 import json
+import os
 import subprocess
 import datetime
+import configparser
 from enum import Enum, auto
 
 from rich.panel import Panel
@@ -23,6 +25,7 @@ from anilist.mutation import set_progress
 from anilist.authenticate import get_token
 from scraper import find_magnet
 from downloader import Torrent
+from appdata import AppDataPaths
 
 
 class States(Enum):
@@ -285,10 +288,15 @@ class Mono(App):
 
 
 if __name__ == "__main__":
-    with open("app/data/config.json") as f:
-        config: dict = json.load(f)
-    if "access_token" not in config:
-        config["access_token"] = get_token()
-        with open("app/data/config.json", "w") as f:
-            json.dump(config, f)
-    Mono.run(title="Mono", log="textual.log")
+
+    app_paths = AppDataPaths("mono")
+    if app_paths.require_setup:
+        app_paths.setup()
+    config = configparser.ConfigParser()
+    config.read(app_paths.config_path)
+    if "access_token" not in config["DEFAULT"]:
+        config["DEFAULT"]["access_token"] = get_token()
+        with open(app_paths.config_path, "w") as config_file:
+            config.write(config_file)
+    os.environ["access_token"] = config["DEFAULT"]["access_token"]
+    Mono.run(title="Mono", log=app_paths.log_file_path)

@@ -1,4 +1,4 @@
-import json
+import os
 
 
 def get_token():
@@ -12,10 +12,8 @@ def get_token():
 
 
 def get_headers():
-    with open("app/data/config.json") as f:
-        TOKEN: str = json.load(f)["access_token"]
     return {
-        "Authorization": "Bearer " + TOKEN,
+        "Authorization": "Bearer " + os.environ["access_token"],
         "Content-Type": "application/json",
         "Accept": "application/json",
     }
