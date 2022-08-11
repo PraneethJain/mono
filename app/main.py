@@ -46,6 +46,9 @@ class Episode(Widget):
     app_paths = AppDataPaths("mono")
     data_path = os.path.join(app_paths.app_data_path, "downloading.json")
 
+    if app_paths.require_setup:
+        app_paths.setup()
+
     if not os.path.exists(data_path):
         with open(data_path, "w+") as f:
             json.dump({}, f)
@@ -297,8 +300,6 @@ class Mono(App):
 if __name__ == "__main__":
 
     app_paths = AppDataPaths("mono")
-    if app_paths.require_setup:
-        app_paths.setup()
     config = configparser.ConfigParser()
     config.read(app_paths.config_path)
     if "access_token" not in config["DEFAULT"]:
