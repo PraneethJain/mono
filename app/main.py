@@ -43,7 +43,14 @@ class Episode(Widget):
     style = Reactive(Style())
     title = Reactive(Text())
 
-    with open(r"./app/data/downloading.json", "r") as f:
+    app_paths = AppDataPaths("mono")
+    data_path = os.path.join(app_paths.app_data_path, "downloading.json")
+
+    if not os.path.exists(data_path):
+        with open(data_path, "w+") as f:
+            json.dump({}, f)
+
+    with open(data_path) as f:
         downloading = json.load(f)
 
     def __init__(
@@ -109,7 +116,7 @@ class Episode(Widget):
             case States.NEW_EPISODE:
                 await self.download()
 
-        with open(r"./app/data/downloading.json", "w") as f:
+        with open(self.data_path, "w") as f:
             json.dump(self.downloading, f)
 
     def set_to_air(self) -> None:
