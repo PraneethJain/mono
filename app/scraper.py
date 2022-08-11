@@ -2,9 +2,9 @@ import httpx
 from bs4 import BeautifulSoup
 
 
-async def find_magnet(title: str):
-    title = title.replace("2nd Season", "S2")
-    url = f"https://www.tokyotosho.info/rss.php?terms={title.replace(' ','+')}&type=1&searchName=true&searchComment=true&size_min=&size_max=&username="
+async def find_magnet(search_term: str):
+    search_term = search_term.replace("2nd Season", "S2")
+    url = f"https://www.tokyotosho.info/rss.php?terms={search_term.replace(' ','+')}&type=1&searchName=true&searchComment=true&size_min=&size_max=&username="
     async with httpx.AsyncClient() as client:
         r = await client.get(url)
     soup = BeautifulSoup(r.text, "xml")
@@ -33,9 +33,9 @@ async def find_magnet(title: str):
     elif "Erai-raws" in options:
         return options["Erai-raws"]["1080p"]
     else:
-        temp = title.split()
+        temp = search_term.split()
         if len(temp) < 5:
             return None
         temp.pop(-3)
-        title = " ".join(temp)
-        return await find_magnet(title)
+        search_term = " ".join(temp)
+        return await find_magnet(search_term)

@@ -199,19 +199,25 @@ class Episode(Widget):
         self.style = Style(color="#48cae4")
 
     async def download(self) -> None:
-        title, magnet = await find_magnet(self.content)
-        series = " ".join(self.content.split()[:-2])
-        self.torrent = Torrent(series, magnet)
+        try:
+            title, magnet = await find_magnet(self.content)
+        except TypeError:
+            self.renderable = Styled(
+                f"{self.content} (Magnet not found!)", Style(color="#42e2b8")
+            )
+        else:
+            series = " ".join(self.content.split()[:-2])
+            self.torrent = Torrent(series, magnet)
 
-        if self.content not in self.downloading:
-            self.infohash = self.torrent.get_infohash()
-            self.ep_title = title
-            self.downloading[self.content] = {
-                "infohash": self.torrent.get_infohash(),
-                "title": title,
-            }
-            self.paused = False
-            self.set_downloading()
+            if self.content not in self.downloading:
+                self.infohash = self.torrent.get_infohash()
+                self.ep_title = title
+                self.downloading[self.content] = {
+                    "infohash": self.torrent.get_infohash(),
+                    "title": title,
+                }
+                self.paused = False
+                self.set_downloading()
 
     def pause(self) -> None:
         Torrent.pause_torrent(self.infohash)
