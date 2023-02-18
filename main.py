@@ -1,4 +1,4 @@
-import anilist.token
+import anilist
 
 if __name__ == "__main__":
-    print(anilist.token.get_headers())
+    print(anilist.get_headers())
