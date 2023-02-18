@@ -1,0 +1,46 @@
+AnimeCard {
+    padding: 0 0;
+    text-align: center;
+    content-align: center middle;
+    border: $primary round;
+    min-height: 1;
+    height: 1;
+}
+
+
+AnimeCard Markdown {
+    margin: 1;
+}
+
+Static {
+    text-align: center;
+}
+
+#description {
+    display: none;
+}
+.active #description {
+    display: block;
+}
+
+.active {
+    background: $panel;
+    border: $secondary tall;
+}
+
+Horizontal {
+    content-align: center middle;
+}
+
+Buttons {
+    margin: 1;
+    min-height: 3;
+    content-align: center middle;
+}
+
+Button {
+    padding: 0;
+    min-height: 2;
+    text-align: center;
+    content-align: center middle;
+}
