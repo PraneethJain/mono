@@ -1,4 +1,6 @@
 import anilist
+import asyncio
+from rich import print
 
 if __name__ == "__main__":
-    print(anilist.get_headers())
+    print(asyncio.run(anilist.get_user_list()))
