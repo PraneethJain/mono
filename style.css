@@ -7,7 +7,6 @@ AnimeCard {
     height: 1;
 }
 
-
 AnimeCard Markdown {
     margin: 1;
 }
@@ -36,6 +35,16 @@ Buttons {
     margin: 1;
     min-height: 3;
     content-align: center middle;
+    display: none;
+}
+
+Buttons Container {
+    layout: horizontal;
+    overflow-y: hidden;
+}
+
+.active Buttons {
+    display: block;
 }
 
 Button {
@@ -43,4 +52,26 @@ Button {
     min-height: 2;
     text-align: center;
     content-align: center middle;
+}
+
+ProgressSetter {
+    display: none;
+    min-height: 3;
+    align: center middle;
+    margin: 1 0 0 0;
+}
+
+.active ProgressSetter {
+    display: block;
+}
+
+ProgressSetter Container {
+    layout: horizontal;
+    overflow-y: hidden;
+    /* width: 25%; */
+    width: 20;
+}
+
+ProgressSetter Container Button {
+    max-width: 5;
 }
