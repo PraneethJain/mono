@@ -2,10 +2,7 @@ from textual.app import App, ComposeResult
 from textual.widgets import Static, Header, Footer, Markdown, Button
 from textual.containers import Container, Horizontal
 
-import asyncio
 import anilist
-
-medias = [l["media"] for l in asyncio.run(anilist.get_user_list())]
 
 
 class ProgressSetter(Static):
@@ -54,8 +51,12 @@ class AnimeCard(Static):
 
 
 class Main(Static):
+    def __init__(self, user_list: list[dict]):
+        super().__init__()
+        self.user_list = user_list
+
     def compose(self) -> ComposeResult:
-        for ele in medias:
+        for ele in self.user_list:
             yield AnimeCard(ele)
 
 
@@ -64,10 +65,12 @@ class Mono(App):
     CSS_PATH = "style.css"
     BINDINGS = [("q", "quit", "Quit")]
 
-    def on_mount(self) -> None:
+    async def on_mount(self) -> None:
         self.mount(Header(True))
         self.mount(Footer())
-        self.mount(Main())
+        user_list_data = await anilist.get_user_list()
+        user_list = [l["media"] for l in user_list_data]
+        self.mount(Main(user_list))
 
 
 if __name__ == "__main__":
