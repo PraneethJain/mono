@@ -2,8 +2,8 @@ import httpx
 from bs4 import BeautifulSoup
 from edge_cases import mappings
 
-import asyncio
-from rich import print
+# import asyncio
+# from rich import print
 
 
 class Scraper:
@@ -36,6 +36,8 @@ class Scraper:
     async def close(self) -> None:
         await self.client.aclose()
 
+
+scraper = Scraper()
 
 # async def main():
 #     scraper = Scraper()

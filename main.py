@@ -1,9 +1,12 @@
 from textual.app import App, ComposeResult
 from textual.widgets import Static, Header, Footer, Markdown, Button
 from textual.containers import Container
+
 from enum import Enum, auto
+from asyncio import gather
 
 from anilist import ani
+from scrape import scraper
 
 
 class ProgressState(Enum):
@@ -59,8 +62,13 @@ class ProgressSetter(Static):
                         self.plus_button.disabled = True
                         self.minus_button.disabled = True
                         self.state_button.label = f"↺ Finding torrent"
-                        # Find the torrent link and switch the state to downloading
-                        # Use self.set_timer() to check downloading percentage
+
+                        self.magnets = await scraper.find_magnets(
+                            self.titles["romaji"], self.progress + 1
+                        )
+
+                        self.state = ProgressState.downloading
+                        self.download_timer = self.set_interval(1, self.download)
 
                     case ProgressState.downloaded:
                         self.state_button.disabled = True
@@ -72,6 +80,9 @@ class ProgressSetter(Static):
         self.middle_button.label = str(self.progress)
         self.minus_button.disabled = self.progress == 0
         self.plus_button.disabled = self.progress == self.max_progress
+
+    def download(self) -> None:
+        self.state_button.label = f"0 %"
 
 
 class AnimeCard(Static):
@@ -134,7 +145,7 @@ class Mono(App):
         self.mount(Main(user_list))
 
     async def on_quit(self) -> None:
-        await ani.close()
+        await gather(ani.close(), scraper.close())
 
 
 if __name__ == "__main__":
