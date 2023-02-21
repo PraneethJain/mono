@@ -71,7 +71,7 @@ class ProgressSetter(Static):
                         self.magnets = await scraper.find_magnets(
                             self.title, self.progress + 1
                         )
-                        self.torrent = Torrent(self.titles, self.magnets["first"][1])
+                        self.torrent = Torrent(self.title, self.magnets["first"][1])
                         self.state = ProgressState.downloading
                         self.download_timer = self.set_interval(1, self.download)
 
