@@ -15,12 +15,15 @@ class ProgressState(Enum):
 
 
 class ProgressSetter(Static):
-    def __init__(self, progress: int, max_progress: int, media_id: int) -> None:
+    def __init__(
+        self, progress: int, max_progress: int, media_id: int, titles: dict[str, str]
+    ) -> None:
         super().__init__()
 
-        self.media_id = media_id
         self.progress = progress
         self.max_progress = max_progress
+        self.media_id = media_id
+        self.titles = titles
         self.minus_button = Button("-", self.progress == 0, id="minus")
         self.plus_button = Button("+", self.progress == self.max_progress, id="plus")
         self.middle_button = Button(str(self.progress), True, id="middle")
@@ -86,7 +89,7 @@ class AnimeCard(Static):
             self.max_progress = self.info["nextAiringEpisode"]["episode"] - 1
 
         self.progress_widget = ProgressSetter(
-            self.progress, self.max_progress, self.info["id"]
+            self.progress, self.max_progress, self.info["id"], self.info["title"]
         )
         self.description_widget = Markdown(self.info["description"], id="description")
 
