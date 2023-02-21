@@ -5,7 +5,6 @@ from rich import print
 
 async def main():
     print(await ani.get_user_list())
-    print(await ani.set_progress(142838, 0))
     await ani.close()
 
 

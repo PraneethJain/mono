@@ -1,20 +1,39 @@
 from textual.app import App, ComposeResult
 from textual.widgets import Static, Header, Footer, Markdown, Button
-from textual.containers import Container, Horizontal
+from textual.containers import Container
 
 from anilist import ani
 
 
 class ProgressSetter(Static):
-    def __init__(self, progress: int) -> None:
+    def __init__(self, progress: int, max_progress: int, media_id: int) -> None:
         super().__init__()
+
+        self.media_id = media_id
         self.progress = progress
-        self.minus = Button("-")
-        self.plus = Button("+")
-        self.middle = Button(str(self.progress))
+        self.max_progress = max_progress
+        self.minus = Button("-", self.progress == 0, id="minus")
+        self.plus = Button("+", self.progress == self.max_progress, id="plus")
+        self.middle = Button(str(self.progress), id="middle")
 
     def compose(self) -> ComposeResult:
         yield Container(self.minus, self.middle, self.plus)
+
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
+        match event.button.id:
+            case "minus":
+                self.progress = max(0, self.progress - 1)
+            case "plus":
+                self.progress = min(self.max_progress, self.progress + 1)
+
+        await self.update_progress()
+
+    async def update_progress(self) -> None:
+        await ani.set_progress(self.media_id, self.progress)
+
+        self.middle.label = str(self.progress)
+        self.minus.disabled = self.progress == 0
+        self.plus.disabled = self.progress == self.max_progress
 
 
 class AnimeCard(Static):
@@ -24,7 +43,17 @@ class AnimeCard(Static):
         self.active = False
         self.title_widget = Static(self.info["title"]["romaji"])
         self.description_widget = Markdown(self.info["description"], id="description")
-        self.progress_widget = ProgressSetter(self.info["mediaListEntry"]["progress"])
+
+        if self.info["status"] == "FINISHED":
+            self.max_progress = self.info["episodes"]
+        elif self.info["nextAiringEpisode"] is None:
+            self.max_progress = self.info["mediaListEntry"]["progress"]
+        else:
+            self.max_progress = self.info["nextAiringEpisode"]["episode"] - 1
+
+        self.progress_widget = ProgressSetter(
+            self.info["mediaListEntry"]["progress"], self.max_progress, self.info["id"]
+        )
 
     def compose(self) -> ComposeResult:
         yield Container(
