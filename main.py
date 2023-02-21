@@ -1,8 +1,17 @@
 from textual.app import App, ComposeResult
 from textual.widgets import Static, Header, Footer, Markdown, Button
 from textual.containers import Container
+from enum import Enum, auto
 
 from anilist import ani
+
+
+class ProgressState(Enum):
+    next_episode_unavailable = auto()
+    next_episode_available = auto()
+    finding_torrent = auto()
+    downloading = auto()
+    downloaded = auto()
 
 
 class ProgressSetter(Static):
@@ -12,17 +21,24 @@ class ProgressSetter(Static):
         self.media_id = media_id
         self.progress = progress
         self.max_progress = max_progress
-        self.minus = Button("-", self.progress == 0, id="minus")
-        self.plus = Button("+", self.progress == self.max_progress, id="plus")
-        self.middle = Button(str(self.progress), True, id="middle")
+        self.minus_button = Button("-", self.progress == 0, id="minus")
+        self.plus_button = Button("+", self.progress == self.max_progress, id="plus")
+        self.middle_button = Button(str(self.progress), True, id="middle")
 
-        self.next_episode_available = self.progress != self.max_progress
-        self.download_button = Button(f"⬇️ {self.progress + 1}", id="download")
+        self.state = ProgressState.next_episode_unavailable
+        if self.progress != self.max_progress:
+            self.state = ProgressState.next_episode_available
+
+        # To do:
+        # Condition to check if next episode is downloading/ready to watch and set state
+
+        self.state_button = Button(f"⬇️ {self.progress + 1}", id="state")
 
     def compose(self) -> ComposeResult:
-        yield Container(self.minus, self.middle, self.plus)
-        if self.next_episode_available:
-            yield self.download_button
+        yield Container(self.minus_button, self.middle_button, self.plus_button)
+
+        if self.state != ProgressState.next_episode_unavailable:
+            yield self.state_button
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         match event.button.id:
@@ -32,15 +48,27 @@ class ProgressSetter(Static):
             case "plus":
                 self.progress = min(self.max_progress, self.progress + 1)
                 await self.update_progress()
-            case "download":
-                pass
+            case "state":
+                match self.state:
+                    case ProgressState.next_episode_available:
+                        self.state = ProgressState.finding_torrent
+                        self.state_button.disabled = True
+                        self.plus_button.disabled = True
+                        self.minus_button.disabled = True
+                        self.state_button.label = f"↺ Finding torrent"
+                        # Find the torrent link and switch the state to downloading
+                        # Use self.set_timer() to check downloading percentage
+
+                    case ProgressState.downloaded:
+                        self.state_button.disabled = True
+                        # Open subprocess to play the downloaded file
 
     async def update_progress(self) -> None:
         await ani.set_progress(self.media_id, self.progress)
 
-        self.middle.label = str(self.progress)
-        self.minus.disabled = self.progress == 0
-        self.plus.disabled = self.progress == self.max_progress
+        self.middle_button.label = str(self.progress)
+        self.minus_button.disabled = self.progress == 0
+        self.plus_button.disabled = self.progress == self.max_progress
 
 
 class AnimeCard(Static):

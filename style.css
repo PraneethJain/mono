@@ -83,10 +83,10 @@ ProgressSetter > Container > Button {
 
 ProgressSetter > Button {
     display: block;
-    max-width: 15;
+    width: 20;
     margin: 1;
     align: center middle;
-    offset: -1 0;
+    offset: -4 0;
 }
 
 NextEpisode {
