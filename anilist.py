@@ -5,118 +5,144 @@ import httpx
 import info
 
 
-def get_token() -> None:
-    """
-    Retrieves the token and writes it to the users appdata, if not present already.
-    """
+class Anilist:
+    def __init__(self) -> None:
+        self.client = httpx.AsyncClient(headers=self.get_headers())
+        self.url = "https://graphql.anilist.co"
 
-    if not os.path.exists(info.data_dir):
-        os.makedirs(info.data_dir)
+    def get_token(self) -> None:
+        """
+        Retrieves the token and writes it to the users appdata, if not present already.
+        """
 
-        webbrowser.open(
-            "https://anilist.co/api/v2/oauth/authorize?client_id=8068&response_type=token"
-        )
+        if not os.path.exists(info.data_dir):
+            os.makedirs(info.data_dir)
 
-        with open(info.data_path, "w") as f:
-            json.dump({"token": input("Paste access token here: ")}, f)
+            webbrowser.open(
+                "https://anilist.co/api/v2/oauth/authorize?client_id=8068&response_type=token"
+            )
 
+            with open(info.data_path, "w") as f:
+                json.dump({"token": input("Paste access token here: ")}, f)
 
-def get_headers() -> dict[str, str]:
-    """
-    Returns headers required to make authorized requests
-    """
+    def get_headers(self) -> dict[str, str]:
+        """
+        Returns headers required to make authorized requests
+        """
 
-    get_token()
+        self.get_token()
 
-    with open(info.data_path, "r") as f:
-        token = json.load(f)["token"]
+        with open(info.data_path, "r") as f:
+            token = json.load(f)["token"]
 
-    return {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-    }
-
-
-async def get_user_data() -> dict:
-    """
-    Returns the authenticated user's data, including user id and account statistics.
-    """
-
-    url = "https://graphql.anilist.co"
-    query = """
-    query {
-        Viewer {
-            id
-            name
-            about
-            statistics {
-                anime {
-                    count
-                    minutesWatched
-                    episodesWatched
-                }
-            }
-            siteUrl
-            createdAt
-            updatedAt
+        return {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
         }
-    }
-    """
 
-    async with httpx.AsyncClient() as client:
-        r = await client.post(url, json={"query": query}, headers=get_headers())
+    async def close(self) -> None:
+        await self.client.aclose()
 
-    return json.loads(r.text)["data"]["Viewer"]
+    async def get_user_data(self) -> dict:
+        """
+        Returns the authenticated user's data, including user id and account statistics.
+        """
 
-
-async def get_user_list() -> list[dict]:
-    """
-    Returns the authenticated user's CURRENT list, containing details of the anime.
-    """
-    url = "https://graphql.anilist.co"
-    query = """
-    query ($userId: Int, $status: MediaListStatus) {
-        MediaListCollection (userId: $userId, status: $status, type: ANIME) {
-            lists {
+        query = """
+        query {
+            Viewer {
+                id
                 name
-                entries {
-                    media {
-                        id
-                        title {
-                            romaji
-                            english
-                            native
-                            userPreferred
-                        }
-                        format
-                        status
-                        description
-                        startDate {day month year}
-                        endDate {day month year}
-                        season
-                        seasonYear
-                        episodes
-                        duration
-                        source
-                        mediaListEntry {
-                            progress
-                        }
-                        nextAiringEpisode {
-                            airingAt
-                            timeUntilAiring
-                            episode
+                about
+                statistics {
+                    anime {
+                        count
+                        minutesWatched
+                        episodesWatched
+                    }
+                }
+                siteUrl
+                createdAt
+                updatedAt
+            }
+        }
+        """
+
+        r = await self.client.post(self.url, json={"query": query})
+
+        return json.loads(r.text)["data"]["Viewer"]
+
+    async def get_user_list(self) -> list[dict]:
+        """
+        Returns the authenticated user's CURRENT list, containing details of the anime.
+        """
+        query = """
+        query ($userId: Int, $status: MediaListStatus) {
+            MediaListCollection (userId: $userId, status: $status, type: ANIME) {
+                lists {
+                    name
+                    entries {
+                        media {
+                            id
+                            title {
+                                romaji
+                                english
+                                native
+                                userPreferred
+                            }
+                            format
+                            status
+                            description
+                            startDate {day month year}
+                            endDate {day month year}
+                            season
+                            seasonYear
+                            episodes
+                            duration
+                            source
+                            mediaListEntry {
+                                progress
+                            }
+                            nextAiringEpisode {
+                                airingAt
+                                timeUntilAiring
+                                episode
+                            }
                         }
                     }
                 }
             }
         }
-    }
-    """
-    variables = {"userId": (await get_user_data())["id"], "status": "CURRENT"}
-    async with httpx.AsyncClient() as client:
-        r = await client.post(
-            url, json={"query": query, "variables": variables}, headers=get_headers()
+        """
+        variables = {"userId": (await self.get_user_data())["id"], "status": "CURRENT"}
+        r = await self.client.post(
+            self.url, json={"query": query, "variables": variables}
         )
 
-    return json.loads(r.text)["data"]["MediaListCollection"]["lists"][0]["entries"]
+        return json.loads(r.text)["data"]["MediaListCollection"]["lists"][0]["entries"]
+
+    async def set_progress(self, mediaId: int, progress: int) -> dict:
+        """
+        Sets the progress of the anime with `mediaId` to `progress`
+        """
+
+        query = """
+        mutation ($mediaId: Int, $progress: Int) {
+            SaveMediaListEntry(mediaId: $mediaId, progress: $progress) {
+                mediaId
+                id
+                status
+                progress
+            }
+        }
+        """
+        variables = {"mediaId": mediaId, "progress": progress}
+
+        r = await self.client.post(
+            self.url, json={"query": query, "variables": variables}
+        )
+        return json.loads(r.text)
+
+
+ani = Anilist()

@@ -2,7 +2,7 @@ from textual.app import App, ComposeResult
 from textual.widgets import Static, Header, Footer, Markdown, Button
 from textual.containers import Container, Horizontal
 
-import anilist
+from anilist import ani
 
 
 class ProgressSetter(Static):
@@ -22,12 +22,6 @@ class AnimeCard(Static):
         super().__init__()
         self.info = info
         self.active = False
-        self.episodes_to_watch = list(
-            range(
-                self.info["mediaListEntry"]["progress"] + 1,
-                self.info["nextAiringEpisode"]["episode"],
-            )
-        )
         self.title_widget = Static(self.info["title"]["romaji"])
         self.description_widget = Markdown(self.info["description"], id="description")
         self.progress_widget = ProgressSetter(self.info["mediaListEntry"]["progress"])
@@ -68,9 +62,12 @@ class Mono(App):
     async def on_mount(self) -> None:
         self.mount(Header(True))
         self.mount(Footer())
-        user_list_data = await anilist.get_user_list()
+        user_list_data = await ani.get_user_list()
         user_list = [l["media"] for l in user_list_data]
         self.mount(Main(user_list))
+
+    async def on_quit(self) -> None:
+        await ani.close()
 
 
 if __name__ == "__main__":
