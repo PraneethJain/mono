@@ -14,19 +14,26 @@ class ProgressSetter(Static):
         self.max_progress = max_progress
         self.minus = Button("-", self.progress == 0, id="minus")
         self.plus = Button("+", self.progress == self.max_progress, id="plus")
-        self.middle = Button(str(self.progress), id="middle")
+        self.middle = Button(str(self.progress), True, id="middle")
+
+        self.next_episode_available = self.progress != self.max_progress
+        self.download_button = Button(f"⬇️ {self.progress + 1}", id="download")
 
     def compose(self) -> ComposeResult:
         yield Container(self.minus, self.middle, self.plus)
+        if self.next_episode_available:
+            yield self.download_button
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         match event.button.id:
             case "minus":
                 self.progress = max(0, self.progress - 1)
+                await self.update_progress()
             case "plus":
                 self.progress = min(self.max_progress, self.progress + 1)
-
-        await self.update_progress()
+                await self.update_progress()
+            case "download":
+                pass
 
     async def update_progress(self) -> None:
         await ani.set_progress(self.media_id, self.progress)
@@ -42,18 +49,18 @@ class AnimeCard(Static):
         self.info = info
         self.active = False
         self.title_widget = Static(self.info["title"]["romaji"])
-        self.description_widget = Markdown(self.info["description"], id="description")
-
+        self.progress = self.info["mediaListEntry"]["progress"]
         if self.info["status"] == "FINISHED":
             self.max_progress = self.info["episodes"]
         elif self.info["nextAiringEpisode"] is None:
-            self.max_progress = self.info["mediaListEntry"]["progress"]
+            self.max_progress = self.progress
         else:
             self.max_progress = self.info["nextAiringEpisode"]["episode"] - 1
 
         self.progress_widget = ProgressSetter(
-            self.info["mediaListEntry"]["progress"], self.max_progress, self.info["id"]
+            self.progress, self.max_progress, self.info["id"]
         )
+        self.description_widget = Markdown(self.info["description"], id="description")
 
     def compose(self) -> ComposeResult:
         yield Container(
@@ -64,10 +71,10 @@ class AnimeCard(Static):
 
     def on_click(self) -> None:
         if self.active:
-            self.styles.animate("height", value=1, final_value=10, duration=0.15)
+            self.styles.animate("height", value=1, final_value=15, duration=0.15)
             self.remove_class("active")
         else:
-            self.styles.animate("height", value=10, final_value=1, duration=0.15)
+            self.styles.animate("height", value=15, final_value=1, duration=0.15)
             self.add_class("active")
 
         self.active = not self.active

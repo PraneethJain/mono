@@ -55,6 +55,10 @@ Button {
     content-align: center middle;
 }
 
+Button:focus {
+    text-style: bold;
+}
+
 ProgressSetter {
     display: none;
     min-height: 3;
@@ -66,13 +70,30 @@ ProgressSetter {
     display: block;
 }
 
-ProgressSetter Container {
+ProgressSetter > Container {
     layout: horizontal;
     overflow-y: hidden;
     /* width: 25%; */
     width: 20;
 }
 
-ProgressSetter Container Button {
+ProgressSetter > Container > Button {
     max-width: 5;
+}
+
+ProgressSetter > Button {
+    display: block;
+    max-width: 15;
+    margin: 1;
+    align: center middle;
+    offset: -1 0;
+}
+
+NextEpisode {
+    display: none;
+    offset: -3 0
+}
+
+.active NextEpisode {
+    display: block;
 }
