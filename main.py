@@ -7,6 +7,9 @@ from asyncio import gather
 
 from anilist import ani
 from scrape import scraper
+from info import data_path
+from json import load, dump
+from os import path
 
 
 class ProgressState(Enum):
@@ -136,6 +139,20 @@ class Mono(App):
 
     CSS_PATH = "style.css"
     BINDINGS = [("q", "quit", "Quit")]
+
+    def __init__(self) -> None:
+        super().__init__()
+        ani.get_token()
+        with open(data_path, "r") as f:
+            data = load(f)
+            if "download_path" not in data:
+                download_path = ""
+                while not path.exists(download_path):
+                    download_path = input("Enter path to store downloads: ")
+                data["download_path"] = download_path
+
+        with open(data_path, "w") as f:
+            dump(data, f)
 
     async def on_mount(self) -> None:
         self.mount(Header(True))

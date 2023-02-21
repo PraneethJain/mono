@@ -14,10 +14,10 @@ class Anilist:
         """
         Retrieves the token and writes it to the users appdata, if not present already.
         """
-
         if not os.path.exists(info.data_dir):
             os.makedirs(info.data_dir)
 
+        if not os.path.exists(info.data_path):
             webbrowser.open(
                 "https://anilist.co/api/v2/oauth/authorize?client_id=8068&response_type=token"
             )
