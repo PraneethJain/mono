@@ -1,5 +1,6 @@
 import httpx
 from bs4 import BeautifulSoup
+from edge_cases import mappings
 
 import asyncio
 from rich import print
@@ -11,40 +12,37 @@ class Scraper:
     def __init__(self) -> None:
         self.client = httpx.AsyncClient()
 
-    async def find_magnets(self, search_term: str) -> str:
+    async def find_magnets(self, series: str, episode_number: int) -> str:
+        if series in mappings:
+            episode_number += mappings[series][1]
+            series = mappings[series][0]
+        elif "Season " in series:
+            series = series.replace("Season ", "S")
+        search_term = f"{series} - {episode_number:02d}"
         url = self.url + search_term.replace(" ", "+")
         r = await self.client.get(url)
         soup = BeautifulSoup(r.text, "html.parser")
-        
-        for i, row in enumerate(soup.select(".success")):
-            if i==0:
-                print(row)
-                print()
-            try:
-                title = (
-                    row.find(True)
-                    .find_next_sibling()
-                    .find(True)
-                    .find_next_sibling()
-                    .attrs["title"]
-                )
-                magnet = (
-                    row.find(True)
-                    .find_next_sibling()
-                    .find_next_sibling()
-                    .find(True)
-                    .find_next_sibling()
-                    .attrs["href"]
-                )
-            except:
-                print(row)
-                print()
 
-        return (title, magnet)
+        magnets = {}
+        for node in soup.select(".success"):
+            title = node.select("td")[1].select("a")[-1].attrs["title"]
+            magnet = node.select("td")[2].select("a")[-1].attrs["href"]
+            magnets[title] = magnet
+            if "[SubsPlease]" in title and "1080p" in title:
+                magnets["first"] = (title, magnet)
+
+        return magnets
 
     async def close(self) -> None:
         await self.client.aclose()
 
-async def main():
-    scraper = Scraper()
-    scraper.find_magnets("Otonari no Tenshi-sama ni Itsunomanika Dame Ningen ni Sareteita Ken - 01")
+
+# async def main():
+#     scraper = Scraper()
+#     series = "Fumetsu no Anata e Season 2"
+#     print(await scraper.find_magnets(series, 7))
+#     await scraper.close()
+
+
+# if __name__ == "__main__":
+#     asyncio.run(main())
