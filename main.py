@@ -4,12 +4,13 @@ from textual.containers import Container
 
 from enum import Enum, auto
 from asyncio import gather
+from os import path
+from json import load, dump
 
 from anilist import ani
 from scrape import scraper
+from torrent import Torrent
 from info import data_path
-from json import load, dump
-from os import path
 
 
 class ProgressState(Enum):
@@ -30,6 +31,7 @@ class ProgressSetter(Static):
         self.max_progress = max_progress
         self.media_id = media_id
         self.titles = titles
+        self.title = self.titles["romaji"]
         self.minus_button = Button("-", self.progress == 0, id="minus")
         self.plus_button = Button("+", self.progress == self.max_progress, id="plus")
         self.middle_button = Button(str(self.progress), True, id="middle")
@@ -67,9 +69,9 @@ class ProgressSetter(Static):
                         self.state_button.label = f"↺ Finding torrent"
 
                         self.magnets = await scraper.find_magnets(
-                            self.titles["romaji"], self.progress + 1
+                            self.title, self.progress + 1
                         )
-
+                        self.torrent = Torrent(self.titles, self.magnets["first"][1])
                         self.state = ProgressState.downloading
                         self.download_timer = self.set_interval(1, self.download)
 
@@ -85,7 +87,7 @@ class ProgressSetter(Static):
         self.plus_button.disabled = self.progress == self.max_progress
 
     def download(self) -> None:
-        self.state_button.label = f"0 %"
+        self.state_button.label = f"{self.torrent.get_download_percentage():.2f} %"
 
 
 class AnimeCard(Static):
