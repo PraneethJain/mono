@@ -74,8 +74,7 @@ class ProgressSetter(Static):
 
     def set_next_episode_unavailable(self) -> None:
         self.state = ProgressState.next_episode_unavailable
-
-        self.state_button.label = f"Next Episode Unavailable"
+        self.state_button.display = False
 
     def set_next_episode_available(self) -> None:
         self.state = ProgressState.next_episode_available
@@ -98,9 +97,7 @@ class ProgressSetter(Static):
 
     def compose(self) -> ComposeResult:
         yield Container(self.minus_button, self.middle_button, self.plus_button)
-
-        if self.state != ProgressState.next_episode_unavailable:
-            yield self.state_button
+        yield self.state_button
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         match event.button.id:
