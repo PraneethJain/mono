@@ -4,13 +4,13 @@ from textual.containers import Container
 
 from enum import Enum, auto
 from asyncio import gather
-from os import path
+from os import path, makedirs
 from json import load, dump
 
 from anilist import ani
 from scrape import scraper
 from torrent import Torrent
-from info import data_path
+from info import data_path, cache_dir, cache_path
 
 
 class ProgressState(Enum):
@@ -22,6 +22,16 @@ class ProgressState(Enum):
 
 
 class ProgressSetter(Static):
+
+    if not path.exists(cache_dir):
+        makedirs(cache_dir)
+    if not path.exists(cache_path):
+        with open(cache_path, "w") as f:
+            dump({}, f)
+
+    with open(cache_path, "r") as f:
+        downloads: dict[str, str] = load(f)
+
     def __init__(
         self, progress: int, max_progress: int, media_id: int, titles: dict[str, str]
     ) -> None:
@@ -35,15 +45,33 @@ class ProgressSetter(Static):
         self.minus_button = Button("-", self.progress == 0, id="minus")
         self.plus_button = Button("+", self.progress == self.max_progress, id="plus")
         self.middle_button = Button(str(self.progress), True, id="middle")
+        self.state_button = Button(f"Loading", id="state")
 
         self.state = ProgressState.next_episode_unavailable
         if self.progress != self.max_progress:
-            self.state = ProgressState.next_episode_available
+            self.set_next_episode_available()
 
-        # To do:
-        # Condition to check if next episode is downloading/ready to watch and set state
+            if (key := f"{self.title} - {self.progress + 1}") in self.downloads:
+                self.torrent = Torrent(self.title, infohash=self.downloads[key])
+                self.state_button.disabled = True
+                self.plus_button.disabled = True
+                self.minus_button.disabled = True
+                self.set_downloading()
 
-        self.state_button = Button(f"⬇️ {self.progress + 1}", id="state")
+                if self.torrent.is_completed():
+                    self.set_downloaded()
+
+    def set_next_episode_available(self) -> None:
+        self.state_button.label = f"⬇️ {self.progress + 1}"
+        self.state = ProgressState.next_episode_available
+
+    def set_downloading(self) -> None:
+        self.state = ProgressState.downloading
+        self.download_timer = self.set_interval(1, self.download)
+
+    def set_downloaded(self) -> None:
+        self.download_timer.stop_no_wait()
+        self.state_button.label = f"▶️ {self.progress + 1}"
 
     def compose(self) -> ComposeResult:
         yield Container(self.minus_button, self.middle_button, self.plus_button)
@@ -71,9 +99,16 @@ class ProgressSetter(Static):
                         self.magnets = await scraper.find_magnets(
                             self.title, self.progress + 1
                         )
-                        self.torrent = Torrent(self.title, self.magnets["first"][1])
-                        self.state = ProgressState.downloading
-                        self.download_timer = self.set_interval(1, self.download)
+                        self.torrent = Torrent(
+                            self.title, magnet=self.magnets["first"][1]
+                        )
+                        self.downloads[
+                            f"{self.title} - {self.progress + 1}"
+                        ] = self.torrent.infohash
+                        with open(cache_path, "w") as f:
+                            dump(self.downloads, f)
+
+                        self.set_downloading()
 
                     case ProgressState.downloaded:
                         self.state_button.disabled = True
@@ -88,6 +123,8 @@ class ProgressSetter(Static):
 
     def download(self) -> None:
         self.state_button.label = f"{self.torrent.get_download_percentage():.2f} %"
+        if self.torrent.is_completed():
+            self.set_downloaded()
 
 
 class AnimeCard(Static):
@@ -145,6 +182,7 @@ class Mono(App):
     def __init__(self) -> None:
         super().__init__()
         ani.get_token()
+
         with open(data_path, "r") as f:
             data = load(f)
             if "download_path" not in data:
@@ -152,7 +190,6 @@ class Mono(App):
                 while not path.exists(download_path):
                     download_path = input("Enter path to store downloads: ")
                 data["download_path"] = download_path
-
         with open(data_path, "w") as f:
             dump(data, f)
 

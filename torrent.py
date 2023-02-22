@@ -10,7 +10,9 @@ class Torrent:
     client = Client("http://127.0.0.1:8080/")
     client.login("admin", "adminadmin")
 
-    def __init__(self, series: str, magnet: str) -> None:
+    def __init__(
+        self, series: str, *, magnet: str | None = None, infohash: str | None = None
+    ) -> None:
         self.series = series
         self.magnet = magnet
         with open(data_path, "r") as f:
@@ -19,8 +21,14 @@ class Torrent:
         self.download_path = (
             f"{data['download_path']}\\{self.sanitize_filename(series)}"
         )
-        self.client.download_from_link(self.magnet, savepath=self.download_path)
-        self.infohash = self.client.torrents(sort="added_on", reverse=True)[0]["hash"]
+
+        if infohash is None:
+            self.client.download_from_link(self.magnet, savepath=self.download_path)
+            self.infohash = self.client.torrents(sort="added_on", reverse=True)[0][
+                "hash"
+            ]
+        else:
+            self.infohash = infohash
 
     def get_download_percentage(self) -> float:
         data = self.client.get_torrent(self.infohash)
