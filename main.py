@@ -1,11 +1,13 @@
 from textual.app import App, ComposeResult
 from textual.widgets import Static, Header, Footer, Markdown, Button
 from textual.containers import Container
+from textual.geometry import clamp
 
 from enum import Enum, auto
 from asyncio import gather
 from os import path, makedirs
 from json import load, dump
+from subprocess import Popen
 
 from anilist import ani
 from scrape import scraper
@@ -30,7 +32,7 @@ class ProgressSetter(Static):
             dump({}, f)
 
     with open(cache_path, "r") as f:
-        downloads: dict[str, str] = load(f)
+        downloads: dict[str, list[str, str]] = load(f)
 
     def __init__(
         self, progress: int, max_progress: int, media_id: int, titles: dict[str, str]
@@ -46,32 +48,53 @@ class ProgressSetter(Static):
         self.plus_button = Button("+", self.progress == self.max_progress, id="plus")
         self.middle_button = Button(str(self.progress), True, id="middle")
         self.state_button = Button(f"Loading", id="state")
+        self.set_state()
 
-        self.state = ProgressState.next_episode_unavailable
-        if self.progress != self.max_progress:
-            self.set_next_episode_available()
+    def set_state(self) -> None:
+
+        if self.progress == self.max_progress:
+            self.set_next_episode_unavailable()
+        else:
 
             if (key := f"{self.title} - {self.progress + 1}") in self.downloads:
-                self.torrent = Torrent(self.title, infohash=self.downloads[key])
+                infohash, filename = self.downloads[key]
+                self.torrent = Torrent(self.title, infohash=infohash)
+                self.torrent_filename = filename
                 self.state_button.disabled = True
                 self.plus_button.disabled = True
                 self.minus_button.disabled = True
-                self.set_downloading()
 
                 if self.torrent.is_completed():
-                    self.set_downloaded()
+                    self.set_downloaded(stop_timer=False)
+                else:
+                    self.set_downloading()
+
+            else:
+                self.set_next_episode_available()
+
+    def set_next_episode_unavailable(self) -> None:
+        self.state = ProgressState.next_episode_unavailable
+
+        self.state_button.label = f"Next Episode Unavailable"
 
     def set_next_episode_available(self) -> None:
-        self.state_button.label = f"⬇️ {self.progress + 1}"
         self.state = ProgressState.next_episode_available
+
+        self.state_button.label = f"⬇️ {self.progress + 1}"
 
     def set_downloading(self) -> None:
         self.state = ProgressState.downloading
+
         self.download_timer = self.set_interval(1, self.download)
 
-    def set_downloaded(self) -> None:
-        self.download_timer.stop_no_wait()
+    def set_downloaded(self, stop_timer=True) -> None:
+        self.state = ProgressState.downloaded
+        if stop_timer:
+            self.download_timer.stop_no_wait()
         self.state_button.label = f"▶️ {self.progress + 1}"
+        self.state_button.disabled = False
+        self.plus_button.disabled = False
+        self.minus_button.disabled = False
 
     def compose(self) -> ComposeResult:
         yield Container(self.minus_button, self.middle_button, self.plus_button)
@@ -102,17 +125,21 @@ class ProgressSetter(Static):
                         self.torrent = Torrent(
                             self.title, magnet=self.magnets["first"][1]
                         )
-                        self.downloads[
-                            f"{self.title} - {self.progress + 1}"
-                        ] = self.torrent.infohash
+                        self.torrent_filename = self.magnets["first"][0]
+                        self.downloads[f"{self.title} - {self.progress + 1}"] = [
+                            self.torrent.infohash,
+                            self.torrent_filename,
+                        ]
                         with open(cache_path, "w") as f:
                             dump(self.downloads, f)
 
                         self.set_downloading()
 
                     case ProgressState.downloaded:
-                        self.state_button.disabled = True
-                        # Open subprocess to play the downloaded file
+                        Popen(
+                            f"{self.torrent.download_path}\\{self.torrent_filename}",
+                            shell=True,
+                        )
 
     async def update_progress(self) -> None:
         await ani.set_progress(self.media_id, self.progress)
@@ -121,8 +148,12 @@ class ProgressSetter(Static):
         self.minus_button.disabled = self.progress == 0
         self.plus_button.disabled = self.progress == self.max_progress
 
+        self.set_state()
+
     def download(self) -> None:
-        self.state_button.label = f"{self.torrent.get_download_percentage():.2f} %"
+        self.state_button.label = (
+            f"{clamp(self.torrent.get_download_percentage(), 0.0, 100.0):.2f} %"
+        )
         if self.torrent.is_completed():
             self.set_downloaded()
 

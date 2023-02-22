@@ -11,7 +11,11 @@ class Torrent:
     client.login("admin", "adminadmin")
 
     def __init__(
-        self, series: str, *, magnet: str | None = None, infohash: str | None = None
+        self,
+        series: str,
+        *,
+        magnet: str | None = None,
+        infohash: str | None = None,
     ) -> None:
         self.series = series
         self.magnet = magnet
@@ -43,3 +47,11 @@ class Torrent:
         return "".join(
             c for c in filename if c.isalnum() or c in keepcharacters
         ).rstrip()
+
+
+if __name__ == "__main__":
+
+    infohash = "6b673ee96b32559808bfe71198c0fb43bd13fabe"
+    series = "Otonari no Tenshi-sama ni Itsunomanika Dame Ningen ni Sareteita Ken"
+
+    t = Torrent(series, infohash=infohash)
