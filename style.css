@@ -1,10 +1,21 @@
+Screen {
+    background: black;
+}
+
+Header, Footer {
+    background: #101010;
+}
+
 AnimeCard {
     padding: 0 0;
     text-align: center;
     content-align: center middle;
-    border: $primary round;
+    border: white tall;
     min-height: 1;
     height: 1;
+    background: black;
+    margin: 1 0;
+    color: white;
 }
 
 AnimeCard Markdown {
