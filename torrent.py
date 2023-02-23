@@ -7,7 +7,11 @@ disable_warnings(ResourceWarning)
 
 
 class Torrent:
-    client = Client("http://127.0.0.1:8080/")
+    try:
+        client = Client("http://127.0.0.1:8080/")
+    except:
+        raise ConnectionError("Open qbittorent web user interface and restart.")
+
     client.login("admin", "adminadmin")
 
     def __init__(
