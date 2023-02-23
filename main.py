@@ -35,7 +35,12 @@ class ProgressSetter(Static):
         downloads: dict[str, list[str, str]] = load(f)
 
     def __init__(
-        self, progress: int, max_progress: int, media_id: int, titles: dict[str, str]
+        self,
+        progress: int,
+        max_progress: int,
+        media_id: int,
+        titles: dict[str, str],
+        parent_widget,
     ) -> None:
         super().__init__()
 
@@ -48,12 +53,15 @@ class ProgressSetter(Static):
         self.plus_button = Button("+", self.progress == self.max_progress, id="plus")
         self.middle_button = Button(str(self.progress), True, id="middle")
         self.state_button = Button(f"Loading", id="state")
+        self.parent_widget = parent_widget
         self.set_state()
 
     def set_state(self) -> None:
 
         if self.progress == self.max_progress:
             self.set_next_episode_unavailable()
+            if self.parent_widget.has_class("highlight"):
+                self.parent_widget.remove_class("highlight")
         else:
 
             if (key := f"{self.title} - {self.progress + 1}") in self.downloads:
@@ -71,6 +79,9 @@ class ProgressSetter(Static):
 
             else:
                 self.set_next_episode_available()
+
+            if not self.parent_widget.has_class("highlight"):
+                self.parent_widget.add_class("highlight")
 
     def set_next_episode_unavailable(self) -> None:
         self.state = ProgressState.next_episode_unavailable
@@ -170,7 +181,7 @@ class AnimeCard(Static):
             self.max_progress = self.info["nextAiringEpisode"]["episode"] - 1
 
         self.progress_widget = ProgressSetter(
-            self.progress, self.max_progress, self.info["id"], self.info["title"]
+            self.progress, self.max_progress, self.info["id"], self.info["title"], self
         )
         self.description_widget = Markdown(self.info["description"], id="description")
 

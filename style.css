@@ -30,6 +30,10 @@ Static {
 #description {
     display: none;
 }
+.highlight {
+    border: $primary tall;
+}
+
 .active #description {
     display: block;
 }
@@ -38,6 +42,7 @@ Static {
     background: $panel;
     border: $secondary tall;
 }
+
 
 Horizontal {
     content-align: center middle;
