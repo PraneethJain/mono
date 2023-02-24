@@ -63,6 +63,7 @@ class ProgressSetter(Static):
             if self.parent_widget.has_class("highlight"):
                 self.parent_widget.remove_class("highlight")
         else:
+            self.state_button.display = True
 
             if (key := f"{self.title} - {self.progress + 1}") in self.downloads:
                 infohash, filename = self.downloads[key]
