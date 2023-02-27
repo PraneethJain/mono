@@ -24,12 +24,14 @@ class Scraper:
         soup = BeautifulSoup(r.text, "html.parser")
 
         magnets = {}
+        found_first = False
         for node in soup.select(".success"):
             title = node.select("td")[1].select("a")[-1].attrs["title"]
             magnet = node.select("td")[2].select("a")[-1].attrs["href"]
             magnets[title] = magnet
-            if "[SubsPlease]" in title and "1080p" in title:
+            if "[SubsPlease]" in title and "1080p" in title and not found_first:
                 magnets["first"] = (title, magnet)
+                found_first = True
 
         return magnets
 
@@ -39,10 +41,11 @@ class Scraper:
 
 scraper = Scraper()
 
+
 # async def main():
 #     scraper = Scraper()
-#     series = "Fumetsu no Anata e Season 2"
-#     print(await scraper.find_magnets(series, 7))
+#     series = "Otonari no Tenshi-sama ni Itsunomanika Dame Ningen ni Sareteita Ken"
+#     print(await scraper.find_magnets(series, 8))
 #     await scraper.close()
 
 
