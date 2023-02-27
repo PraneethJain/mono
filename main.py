@@ -1,6 +1,6 @@
 from textual.app import App, ComposeResult
 from textual.widgets import Static, Header, Footer, Markdown, Button
-from textual.containers import Container
+from textual.containers import Container, Horizontal, Vertical
 from textual.geometry import clamp
 
 from enum import Enum, auto
@@ -13,6 +13,52 @@ from anilist import ani
 from scrape import scraper
 from torrent import Torrent
 from info import data_path, cache_dir, cache_path
+
+
+class AnimeCard(Static):
+    def __init__(self, info: dict) -> None:
+        super().__init__()
+        self.info = info
+        self.title_widget = Static(self.info["title"]["romaji"])
+        self.progress = self.info["mediaListEntry"]["progress"]
+        if self.info["status"] == "FINISHED":
+            self.max_progress = self.info["episodes"]
+        elif self.info["nextAiringEpisode"] is None:
+            self.max_progress = self.progress
+        else:
+            self.max_progress = self.info["nextAiringEpisode"]["episode"] - 1
+
+        self.progress_widget = ProgressSetter(self)
+        self.description_widget = Markdown(self.info["description"], id="description")
+
+        self.container_widget = Container(
+            self.title_widget, self.progress_widget, self.description_widget
+        )
+
+        self.deactivate()
+
+    def compose(self) -> ComposeResult:
+        yield self.container_widget
+
+    def on_click(self) -> None:
+        if self.active:
+            self.deactivate()
+        else:
+            self.activate()
+
+    def activate(self) -> None:
+        self.active = True
+        self.add_class("active")
+        self.container_widget.styles.height = "auto"
+        self.progress_widget.styles.display = "block"
+        self.description_widget.styles.display = "block"
+
+    def deactivate(self) -> None:
+        self.active = False
+        self.remove_class("active")
+        self.container_widget.styles.height = None
+        self.progress_widget.styles.display = "none"
+        self.description_widget.styles.display = "none"
 
 
 class ProgressState(Enum):
@@ -34,27 +80,32 @@ class ProgressSetter(Static):
     with open(cache_path, "r") as f:
         downloads: dict[str, list[str, str]] = load(f)
 
-    def __init__(
-        self,
-        progress: int,
-        max_progress: int,
-        media_id: int,
-        titles: dict[str, str],
-        parent_widget,
-    ) -> None:
+    def __init__(self, card: AnimeCard) -> None:
         super().__init__()
 
-        self.progress = progress
-        self.max_progress = max_progress
-        self.media_id = media_id
-        self.titles = titles
+        self.progress = card.progress
+        self.max_progress = card.max_progress
+        self.media_id = card.info["id"]
+        self.titles = card.info["title"]
         self.title = self.titles["romaji"]
         self.minus_button = Button("-", self.progress == 0, id="minus")
         self.plus_button = Button("+", self.progress == self.max_progress, id="plus")
         self.middle_button = Button(str(self.progress), True, id="middle")
         self.state_button = Button(f"Loading", id="state")
-        self.parent_widget = parent_widget
+        self.parent_widget = card
         self.set_state()
+
+    def compose(self) -> ComposeResult:
+
+        yield Vertical(
+            Horizontal(
+                self.minus_button,
+                self.middle_button,
+                self.plus_button,
+                classes="buttons",
+            ),
+            Horizontal(self.state_button, classes="statebutton"),
+        )
 
     def set_state(self) -> None:
 
@@ -63,7 +114,8 @@ class ProgressSetter(Static):
             if self.parent_widget.has_class("highlight"):
                 self.parent_widget.remove_class("highlight")
         else:
-            self.state_button.display = True
+            self.state_button.styles.display = "block"
+            self.styles.height = 8
 
             if (key := f"{self.title} - {self.progress + 1}") in self.downloads:
                 infohash, filename = self.downloads[key]
@@ -86,7 +138,9 @@ class ProgressSetter(Static):
 
     def set_next_episode_unavailable(self) -> None:
         self.state = ProgressState.next_episode_unavailable
-        self.state_button.display = False
+
+        self.state_button.styles.display = "none"
+        self.styles.height = 4
 
     def set_next_episode_available(self) -> None:
         self.state = ProgressState.next_episode_available
@@ -106,10 +160,6 @@ class ProgressSetter(Static):
         self.state_button.disabled = False
         self.plus_button.disabled = False
         self.minus_button.disabled = False
-
-    def compose(self) -> ComposeResult:
-        yield Container(self.minus_button, self.middle_button, self.plus_button)
-        yield self.state_button
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         match event.button.id:
@@ -165,43 +215,6 @@ class ProgressSetter(Static):
         )
         if self.torrent.is_completed():
             self.set_downloaded()
-
-
-class AnimeCard(Static):
-    def __init__(self, info: dict) -> None:
-        super().__init__()
-        self.info = info
-        self.active = False
-        self.title_widget = Static(self.info["title"]["romaji"])
-        self.progress = self.info["mediaListEntry"]["progress"]
-        if self.info["status"] == "FINISHED":
-            self.max_progress = self.info["episodes"]
-        elif self.info["nextAiringEpisode"] is None:
-            self.max_progress = self.progress
-        else:
-            self.max_progress = self.info["nextAiringEpisode"]["episode"] - 1
-
-        self.progress_widget = ProgressSetter(
-            self.progress, self.max_progress, self.info["id"], self.info["title"], self
-        )
-        self.description_widget = Markdown(self.info["description"], id="description")
-
-    def compose(self) -> ComposeResult:
-        yield Container(
-            self.title_widget,
-            self.progress_widget,
-            self.description_widget,
-        )
-
-    def on_click(self) -> None:
-        if self.active:
-            self.styles.animate("height", value=1, final_value=15, duration=0.15)
-            self.remove_class("active")
-        else:
-            self.styles.animate("height", value=15, final_value=1, duration=0.15)
-            self.add_class("active")
-
-        self.active = not self.active
 
 
 class Main(Static):
