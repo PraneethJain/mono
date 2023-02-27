@@ -41,20 +41,18 @@ class AnimeCard(Static):
         yield self.container_widget
 
     def on_click(self) -> None:
-        if self.active:
+        if self.has_class("active"):
             self.deactivate()
         else:
             self.activate()
 
     def activate(self) -> None:
-        self.active = True
         self.add_class("active")
         self.container_widget.styles.height = "auto"
         self.progress_widget.styles.display = "block"
         self.description_widget.styles.display = "block"
 
     def deactivate(self) -> None:
-        self.active = False
         self.remove_class("active")
         self.container_widget.styles.height = None
         self.progress_widget.styles.display = "none"
