@@ -4,4 +4,5 @@ mappings = {
         "Dungeon ni Deai wo Motomeru no wa Machigatteiru Darou ka S4",
         11,
     ),
+    "Bungou Stray Dogs 4th Season": ("Bungou Stray Dogs", 37),
 }
