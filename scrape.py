@@ -29,7 +29,13 @@ class Scraper:
             title = node.select("td")[1].select("a")[-1].attrs["title"]
             magnet = node.select("td")[2].select("a")[-1].attrs["href"]
             magnets[title] = magnet
-            if "[SubsPlease]" in title and "1080p" in title and not found_first:
+            if (
+                all(
+                    keyword in title
+                    for keyword in ["[SubsPlease]", "1080p", f" {episode_number:02d} "]
+                )
+                and not found_first
+            ):
                 magnets["first"] = (title, magnet)
                 found_first = True
 
