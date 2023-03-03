@@ -19,7 +19,7 @@ class AnimeCard(Static):
     def __init__(self, info: dict) -> None:
         super().__init__()
         self.info = info
-        self.title_widget = Static(self.info["title"]["romaji"])
+        self.title_widget = Static(self.info["title"]["romaji"], classes="title")
         self.progress = self.info["mediaListEntry"]["progress"]
         if self.info["status"] == "FINISHED":
             self.max_progress = self.info["episodes"]
@@ -258,3 +258,7 @@ class Mono(App):
 if __name__ == "__main__":
     app = Mono()
     app.run()
+
+# To do:
+# 1. Refactor classes into their own files
+# 2. Button CSS

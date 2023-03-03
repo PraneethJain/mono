@@ -1,35 +1,52 @@
+* {
+    scrollbar-size: 1 1;
+    scrollbar-gutter: stable;
+}
+
+$scrollbar: rgb(255, 140, 35);
+
 Screen {
-    background: black;
+    background: rgb(0, 0, 0);
+    scrollbar-color: $scrollbar;
+    scrollbar-color-active: $scrollbar;
+    scrollbar-color-hover: $scrollbar;
 }
 
 Header, Footer {
     background: #101010;
 }
 
-* {
-    scrollbar-size: 1 1;
-    scrollbar-gutter: stable;
-}
-
 AnimeCard {
     text-align: center;
-    border: white tall;
+    border: #97CAFE round;
     height: auto;
-    margin: 1 0 0 0;
     overflow: hidden hidden;
+    color: #EDF5E1;
 }
 
 Static {
     text-align: center;
 }
 
-.highlight {
-    border: $primary tall;
+Markdown {
+    margin: 1 0 0 0;
 }
 
 .active {
-    background: $panel;
-    border: $secondary tall;
+    background: black;
+}
+
+.highlight {
+    border: #5cdb95 solid;
+    padding: 1;
+}
+
+.active .title {
+    color: #7abdff;
+}
+
+.highlight.active .title {
+    color: #6effaf;
 }
 
 Button:focus {
@@ -42,10 +59,16 @@ ProgressSetter {
 
 .buttons {
     align: center middle;
+    min-height: 3;
 }
 
 .statebutton {
     align: center middle;
+    height: 0;
+}
+
+.highlight .statebutton {
+    height: auto;
 }
 
 .buttons > Button {
