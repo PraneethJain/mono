@@ -16,7 +16,7 @@ Header, Footer {
     background: #101010;
 }
 
-AnimeCard {
+Card {
     text-align: center;
     border: #97CAFE round;
     height: auto;
