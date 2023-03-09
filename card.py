@@ -142,6 +142,8 @@ class Progress(Static):
     def set_next_episode_available(self) -> None:
         self.state = ProgressStates.next_episode_available
 
+        self.update_buttons()
+        self.state_button.disabled = False
         self.state_button.label = f"⬇️ {self.progress + 1}"
 
     def set_downloading(self) -> None:
@@ -155,8 +157,8 @@ class Progress(Static):
             self.download_timer.stop_no_wait()
         self.state_button.label = f"▶️ {self.progress + 1}"
         self.state_button.disabled = False
-        self.plus_button.disabled = False
-        self.minus_button.disabled = False
+
+        self.update_buttons()
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         match event.button.id:
@@ -174,13 +176,17 @@ class Progress(Static):
                         self.plus_button.disabled = True
                         self.minus_button.disabled = True
                         self.state_button.label = f"↺ Finding torrent"
+                        try:
+                            self.magnets = await scraper.find_magnets(
+                                self.title, self.progress + 1
+                            )
+                            self.torrent = Torrent(
+                                self.title, magnet=self.magnets["first"][1]
+                            )
+                        except:
+                            self.set_next_episode_available()
+                            return
 
-                        self.magnets = await scraper.find_magnets(
-                            self.title, self.progress + 1
-                        )
-                        self.torrent = Torrent(
-                            self.title, magnet=self.magnets["first"][1]
-                        )
                         self.torrent_filename = self.magnets["first"][0]
                         self.downloads[f"{self.title} - {self.progress + 1}"] = [
                             self.torrent.infohash,
@@ -201,10 +207,13 @@ class Progress(Static):
         await ani.set_progress(self.media_id, self.progress)
 
         self.middle_button.label = str(self.progress)
+
+        self.update_buttons()
+        self.set_state()
+
+    def update_buttons(self) -> None:
         self.minus_button.disabled = self.progress == 0
         self.plus_button.disabled = self.progress == self.max_progress
-
-        self.set_state()
 
     def download(self) -> None:
         self.state_button.label = (
