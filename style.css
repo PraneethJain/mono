@@ -53,7 +53,7 @@ Button:focus {
     text-style: bold;
 }
 
-ProgressSetter {
+Progress {
     margin: 1 0 0 0;
 }
 
