@@ -59,7 +59,6 @@ Progress {
 
 .buttons {
     align: center middle;
-    min-height: 3;
 }
 
 .statebutton {
@@ -71,10 +70,29 @@ Progress {
     height: auto;
 }
 
+Progress Button {
+    background: rgb(16, 16, 16);
+    border: none;
+}
+
+Progress Button.-disabled {
+    opacity: 1;
+    text-opacity: 1;
+}
+
+Progress Button:hover {
+    background: rgb(32, 32, 32)
+}
+
+#plus.-disabled, #minus.-disabled {
+    background: rgb(8, 8, 8);
+}
+
 .buttons > Button {
     max-width: 5;
 }
 
 .statebutton > Button {
     max-width: 15;
+    padding: 0 1 0 0; /*To center the text inside the button excluding emoji*/
 }
