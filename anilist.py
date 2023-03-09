@@ -41,9 +41,6 @@ class Anilist:
             "Accept": "application/json",
         }
 
-    async def close(self) -> None:
-        await self.client.aclose()
-
     async def get_user_data(self) -> dict:
         """
         Returns the authenticated user's data, including user id and account statistics.
@@ -143,6 +140,9 @@ class Anilist:
             self.url, json={"query": query, "variables": variables}
         )
         return json.loads(r.text)
+
+    async def close(self) -> None:
+        await self.client.aclose()
 
 
 ani = Anilist()
