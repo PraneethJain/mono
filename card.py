@@ -6,7 +6,8 @@ from textual.widgets import Static, Markdown, Button
 from enum import Enum, auto
 from os import makedirs, path
 from json import dump, load
-from subprocess import Popen
+from subprocess import Popen, call
+from platform import system
 
 from anilist import ani
 from info import cache_dir, cache_path
@@ -193,12 +194,16 @@ class Progress(Static):
                         self.set_downloading()
 
                     case ProgressStates.downloaded:
-                        Popen(
-                            path.join(
-                                self.torrent.download_path, self.torrent_filename
-                            ),
-                            shell=True,
+                        filepath = path.join(
+                            self.torrent.download_path, self.torrent_filename
                         )
+                        if system() == "Windows":
+                            Popen(
+                                filepath,
+                                shell=True,
+                            )
+                        else:
+                            call(("xdg-open", filepath))
 
     async def update_progress(self) -> None:
         await ani.set_progress(self.media_id, self.progress)
