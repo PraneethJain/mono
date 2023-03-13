@@ -67,7 +67,6 @@ class ProgressStates(Enum):
 
 
 class Progress(Static):
-
     if not path.exists(cache_dir):
         makedirs(cache_dir)
     if not path.exists(cache_path):
@@ -93,7 +92,6 @@ class Progress(Static):
         self.set_state()
 
     def compose(self) -> ComposeResult:
-
         yield Vertical(
             Horizontal(
                 self.minus_button,
@@ -105,7 +103,6 @@ class Progress(Static):
         )
 
     def set_state(self) -> None:
-
         if self.progress == self.max_progress:
             self.set_next_episode_unavailable()
             if self.parent_widget.has_class("highlight"):
@@ -177,17 +174,15 @@ class Progress(Static):
                         self.minus_button.disabled = True
                         self.state_button.label = f"↺ Finding torrent"
                         try:
-                            self.magnets = await scraper.find_magnets(
+                            self.magnet = await scraper.find_magnet(
                                 self.title, self.progress + 1
                             )
-                            self.torrent = Torrent(
-                                self.title, magnet=self.magnets["first"][1]
-                            )
+                            self.torrent = Torrent(self.title, magnet=self.magnet[1])
                         except:
                             self.set_next_episode_available()
                             return
 
-                        self.torrent_filename = self.magnets["first"][0]
+                        self.torrent_filename = self.magnet[0]
                         self.downloads[f"{self.title} - {self.progress + 1}"] = [
                             self.torrent.infohash,
                             self.torrent_filename,
@@ -199,7 +194,9 @@ class Progress(Static):
 
                     case ProgressStates.downloaded:
                         Popen(
-                            f"{self.torrent.download_path}\\{self.torrent_filename}",
+                            path.join(
+                                self.torrent.download_path, self.torrent_filename
+                            ),
                             shell=True,
                         )
 
