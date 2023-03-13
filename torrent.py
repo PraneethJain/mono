@@ -1,6 +1,7 @@
 from qbittorrent import Client
 from info import data_path
 from json import load
+from os import path
 from urllib3 import disable_warnings
 
 disable_warnings(ResourceWarning)
@@ -26,8 +27,8 @@ class Torrent:
         with open(data_path, "r") as f:
             data = load(f)
 
-        self.download_path = (
-            f"{data['download_path']}\\{self.sanitize_filename(series)}"
+        self.download_path = path.join(
+            data["download_path"], self.sanitize_filename(series)
         )
 
         if infohash is None:
@@ -54,7 +55,6 @@ class Torrent:
 
 
 if __name__ == "__main__":
-
     infohash = "6b673ee96b32559808bfe71198c0fb43bd13fabe"
     series = "Otonari no Tenshi-sama ni Itsunomanika Dame Ningen ni Sareteita Ken"
 
