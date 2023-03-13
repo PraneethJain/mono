@@ -21,7 +21,6 @@ class Mono(Static):
 
 
 class Main(App):
-
     CSS_PATH = "style.css"
     BINDINGS = [("q", "quit", "Quit")]
 
