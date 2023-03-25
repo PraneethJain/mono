@@ -1,5 +1,14 @@
 from textual.app import App, ComposeResult
-from textual.widgets import Static, Header, Footer
+from textual.widgets import (
+    Static,
+    Header,
+    Footer,
+    ContentSwitcher,
+    Markdown,
+    LoadingIndicator,
+    Placeholder,
+)
+from textual.reactive import reactive
 
 from asyncio import gather
 from json import load, dump
@@ -12,12 +21,22 @@ from scrape import scraper
 
 
 class Mono(Static):
-    def __init__(self, user_list: list[dict]):
+    def __init__(self) -> None:
         super().__init__()
-        self.user_list = user_list
+        self.loading_indicator = LoadingIndicator()
+        self.cards = []
+        self.call_later(self.fetch)
+
+    async def fetch(self) -> None:
+        user_list_data = await ani.get_user_list()
+        user_list = [l["media"] for l in user_list_data]
+        self.cards = list(map(Card, user_list))
+        self.loading_indicator.display = False
+        for card in self.cards:
+            await self.mount(card)
 
     def compose(self) -> ComposeResult:
-        return map(Card, self.user_list)
+        yield self.loading_indicator
 
 
 class Main(App):
@@ -38,12 +57,10 @@ class Main(App):
         with open(data_path, "w") as f:
             dump(data, f)
 
-    async def on_mount(self) -> None:
-        self.mount(Header(True))
-        self.mount(Footer())
-        user_list_data = await ani.get_user_list()
-        user_list = [l["media"] for l in user_list_data]
-        self.mount(Mono(user_list))
+    def compose(self) -> ComposeResult:
+        yield Header(show_clock=True)
+        yield Footer()
+        yield Mono()
 
     async def on_quit(self) -> None:
         await gather(ani.close(), scraper.close())
