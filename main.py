@@ -3,12 +3,8 @@ from textual.widgets import (
     Static,
     Header,
     Footer,
-    ContentSwitcher,
-    Markdown,
     LoadingIndicator,
-    Placeholder,
 )
-from textual.reactive import reactive
 
 from asyncio import gather
 from json import load, dump
@@ -20,9 +16,10 @@ from info import data_path
 from scrape import scraper
 
 
-class Mono(Static):
+class Cards(Static):
     def __init__(self) -> None:
         super().__init__()
+        self.styles.height = "100%"
         self.loading_indicator = LoadingIndicator()
         self.cards = []
         self.call_later(self.fetch)
@@ -60,7 +57,7 @@ class Main(App):
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
         yield Footer()
-        yield Mono()
+        yield Cards()
 
     async def on_quit(self) -> None:
         await gather(ani.close(), scraper.close())
