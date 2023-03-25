@@ -85,9 +85,11 @@ class Progress(Static):
         self.media_id = card.info["id"]
         self.titles = card.info["title"]
         self.title = self.titles["romaji"]
-        self.minus_button = Button("-", self.progress == 0, id="minus")
-        self.plus_button = Button("+", self.progress == self.max_progress, id="plus")
-        self.middle_button = Button(str(self.progress), True, id="middle")
+        self.minus_button = Button("-", disabled=self.progress == 0, id="minus")
+        self.plus_button = Button(
+            "+", disabled=self.progress == self.max_progress, id="plus"
+        )
+        self.middle_button = Button(str(self.progress), disabled=True, id="middle")
         self.state_button = Button(f"Loading", id="state")
         self.parent_widget = card
         self.set_state()
