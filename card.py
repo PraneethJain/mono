@@ -154,7 +154,7 @@ class Progress(Static):
     def set_downloaded(self, stop_timer=True) -> None:
         self.state = ProgressStates.downloaded
         if stop_timer:
-            self.download_timer.stop_no_wait()
+            self.download_timer.stop()
         self.state_button.label = f"▶️ {self.progress + 1}"
         self.state_button.disabled = False
 
