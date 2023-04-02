@@ -26,7 +26,7 @@ class Cards(Static):
 
     async def fetch(self) -> None:
         user_list_data = await ani.get_user_list()
-        user_list = [l["media"] for l in user_list_data]
+        user_list = [list["media"] for list in user_list_data]
         self.cards = list(map(Card, user_list))
         self.loading_indicator.display = False
         for card in self.cards:
@@ -36,7 +36,7 @@ class Cards(Static):
         yield self.loading_indicator
 
 
-class Main(App):
+class Mono(App):
     CSS_PATH = "style.css"
     BINDINGS = [("q", "quit", "Quit")]
 
@@ -64,7 +64,7 @@ class Main(App):
 
 
 if __name__ == "__main__":
-    app = Main()
+    app = Mono()
     app.run()
 
 # To do:
