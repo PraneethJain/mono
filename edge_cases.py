@@ -5,4 +5,5 @@ mappings = {
         11,
     ),
     "Bungou Stray Dogs 4th Season": ("Bungou Stray Dogs", 37),
+    "Dr. STONE: NEW WORLD": ("Dr.Stone S3", 0),
 }
