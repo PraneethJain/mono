@@ -90,7 +90,7 @@ class Progress(Static):
             "+", disabled=self.progress == self.max_progress, id="plus"
         )
         self.middle_button = Button(str(self.progress), disabled=True, id="middle")
-        self.state_button = Button(f"Loading", id="state")
+        self.state_button = Button("Loading", id="state")
         self.parent_widget = card
         self.set_state()
 

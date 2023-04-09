@@ -21,15 +21,18 @@ class Cards(Static):
         super().__init__()
         self.styles.height = "100%"
         self.loading_indicator = LoadingIndicator()
-        self.cards = []
         self.call_later(self.fetch)
 
     async def fetch(self) -> None:
         user_list_data = await ani.get_user_list()
         user_list = [list["media"] for list in user_list_data]
-        self.cards = list(map(Card, user_list))
+        cards = set(map(Card, user_list))
         self.loading_indicator.display = False
-        for card in self.cards:
+        highlighted_cards = {card for card in cards if card.has_class("highlight")}
+        other_cards = cards - highlighted_cards
+        for card in highlighted_cards:
+            await self.mount(card)
+        for card in other_cards:
             await self.mount(card)
 
     def compose(self) -> ComposeResult:
