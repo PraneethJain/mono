@@ -6,4 +6,8 @@ mappings = {
     ),
     "Bungou Stray Dogs 4th Season": ("Bungou Stray Dogs", 37),
     "Dr. STONE: NEW WORLD": ("Dr.Stone S3", 0),
+    "Kidou Senshi Gundam: Suisei no Majo Season 2": (
+        "Mobile Suit Gundam – The Witch from Mercury",
+        12,
+    ),
 }
