@@ -27,6 +27,7 @@ class Scraper:
             magnet = episode_data[0].attrs["href"]
             title = episode_data[1].text
             title = title[:-4] + title[-3:]
+            title = " ".join(title.split())
 
             if f" {episode_number:02d} " in title:
                 return (title, magnet)
