@@ -6,7 +6,7 @@ from textual.widgets import Static, Markdown, Button
 from enum import Enum, auto
 from os import makedirs, path
 from json import dump, load
-from subprocess import Popen, call
+from subprocess import Popen
 from platform import system
 
 from anilist import ani
@@ -205,7 +205,7 @@ class Progress(Static):
                                 shell=True,
                             )
                         else:
-                            call(("xdg-open", filepath))
+                            Popen(["xdg-open", filepath])
 
     async def update_progress(self) -> None:
         await ani.set_progress(self.media_id, self.progress)
