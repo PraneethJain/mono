@@ -1,5 +1,5 @@
 from textual.app import ComposeResult
-from textual.containers import Container, Horizontal, Vertical
+from textual.containers import Container, Horizontal, Vertical, VerticalScroll
 from textual.geometry import clamp
 from textual.widgets import Static, Markdown, Button
 
@@ -67,7 +67,7 @@ class ProgressStates(Enum):
     downloaded = auto()
 
 
-class Progress(Static):
+class Progress(VerticalScroll):
     if not path.exists(cache_dir):
         makedirs(cache_dir)
     if not path.exists(cache_path):
@@ -95,15 +95,10 @@ class Progress(Static):
         self.set_state()
 
     def compose(self) -> ComposeResult:
-        yield Vertical(
-            Horizontal(
-                self.minus_button,
-                self.middle_button,
-                self.plus_button,
-                classes="buttons",
-            ),
-            Horizontal(self.state_button, classes="statebutton"),
+        yield Horizontal(
+            self.minus_button, self.middle_button, self.plus_button, classes="buttons"
         )
+        yield Horizontal(self.state_button, classes="statebutton")
 
     def set_state(self) -> None:
         if self.progress == self.max_progress:
@@ -111,9 +106,6 @@ class Progress(Static):
             if self.parent_widget.has_class("highlight"):
                 self.parent_widget.remove_class("highlight")
         else:
-            self.state_button.styles.display = "block"
-            self.styles.height = 8
-
             if (key := f"{self.title} - {self.progress + 1}") in self.downloads:
                 infohash, filename = self.downloads[key]
                 self.torrent = Torrent(self.title, infohash=infohash)
@@ -135,9 +127,6 @@ class Progress(Static):
 
     def set_next_episode_unavailable(self) -> None:
         self.state = ProgressStates.next_episode_unavailable
-
-        self.state_button.styles.display = "none"
-        self.styles.height = 4
 
     def set_next_episode_available(self) -> None:
         self.state = ProgressStates.next_episode_available
