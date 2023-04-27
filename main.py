@@ -1,4 +1,5 @@
 from textual.app import App, ComposeResult
+from textual.containers import VerticalScroll
 from textual.widgets import (
     Static,
     Header,
@@ -16,7 +17,7 @@ from info import data_path
 from scrape import scraper
 
 
-class Cards(Static):
+class Cards(VerticalScroll):
     def __init__(self) -> None:
         super().__init__()
         self.styles.height = "100%"
