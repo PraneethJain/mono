@@ -70,7 +70,8 @@ class Switcher(Static):
         )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        self.query_one(ContentSwitcher).current = event.button.id
+        if event.button.id in ["anime", "profile"]:
+            self.query_one(ContentSwitcher).current = event.button.id
 
     async def on_quit(self) -> None:
         await gather(ani.close(), scraper.close())
