@@ -11,6 +11,7 @@ class Scraper:
         self.client = httpx.AsyncClient()
 
     async def find_magnet(self, series: str, episode_number: int) -> str:
+        series = series.strip()
         if series in mappings:
             episode_number += mappings[series][1]
             series = mappings[series][0]
