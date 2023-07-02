@@ -63,12 +63,12 @@ class Mono(App):
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
         yield Footer()
-        with Horizontal():
-            yield Button("ok1", id="hello")
-            yield Button("ok2", id="test")
-        with ContentSwitcher(initial="hello"):
-            yield Cards(id="hello")
-            yield Markdown("Test", id="test")
+        with Horizontal(id="context-buttons"):
+            yield Button("Anime", id="anime")
+            yield Button("Profile", id="profile")
+        with ContentSwitcher(initial="anime"):
+            yield Cards(id="anime")
+            yield Markdown("Profile Info", id="profile")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         self.query_one(ContentSwitcher).current = event.button.id
