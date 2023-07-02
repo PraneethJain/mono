@@ -1,10 +1,12 @@
 from textual.app import App, ComposeResult
-from textual.containers import VerticalScroll
+from textual.containers import VerticalScroll, Horizontal
 from textual.widgets import (
-    Static,
     Header,
     Footer,
     LoadingIndicator,
+    Markdown,
+    ContentSwitcher,
+    Button,
 )
 
 from asyncio import gather
@@ -18,8 +20,8 @@ from scrape import scraper
 
 
 class Cards(VerticalScroll):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, id) -> None:
+        super().__init__(id=id)
         self.styles.height = "100%"
         self.loading_indicator = LoadingIndicator()
         self.call_later(self.fetch)
@@ -61,7 +63,15 @@ class Mono(App):
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
         yield Footer()
-        yield Cards()
+        with Horizontal():
+            yield Button("ok1", id="hello")
+            yield Button("ok2", id="test")
+        with ContentSwitcher(initial="hello"):
+            yield Cards(id="hello")
+            yield Markdown("Test", id="test")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        self.query_one(ContentSwitcher).current = event.button.id
 
     async def on_quit(self) -> None:
         await gather(ani.close(), scraper.close())
