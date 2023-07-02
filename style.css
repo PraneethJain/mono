@@ -18,6 +18,10 @@ Footer {
   background: #101010;
 }
 
+Cards {
+  height: 100%;
+}
+
 Card {
   text-align: center;
   border: #97cafe round;

@@ -70,7 +70,7 @@ class Anilist:
 
         return json.loads(r.text)["data"]["Viewer"]
 
-    async def get_user_list(self) -> list[dict]:
+    async def get_user_list(self, userId: int) -> list[dict]:
         """
         Returns the authenticated user's CURRENT list, containing details of the anime.
         """
@@ -112,7 +112,7 @@ class Anilist:
             }
         }
         """
-        variables = {"userId": (await self.get_user_data())["id"], "status": "CURRENT"}
+        variables = {"userId": userId, "status": "CURRENT"}
         r = await self.client.post(
             self.url, json={"query": query, "variables": variables}
         )
