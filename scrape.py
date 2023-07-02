@@ -42,11 +42,11 @@ scraper = Scraper()
 
 
 # async def main():
-# scraper = Scraper()
-# series = "Dr. STONE: NEW WORLD"
-# print(await scraper.find_magnet(series, 1))
-# await scraper.close()
-
-
+#     scraper = Scraper()
+#     series = "Horimiya -piece-"
+#     print(await scraper.find_magnet(series, 1))
+#     await scraper.close()
+#
+#
 # if __name__ == "__main__":
-# asyncio.run(main())
+#     asyncio.run(main())

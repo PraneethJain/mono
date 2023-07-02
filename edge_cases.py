@@ -10,4 +10,5 @@ mappings = {
         "Mobile Suit Gundam – The Witch from Mercury",
         12,
     ),
+    "Horimiya -piece-": ("Horimiya - Piece", 0),
 }
