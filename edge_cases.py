@@ -11,4 +11,5 @@ mappings = {
         12,
     ),
     "Horimiya -piece-": ("Horimiya - Piece", 0),
+    "Mushoku Tensei II: Isekai Ittara Honki Dasu": ("Mushoku Tensei S2", -1),
 }
