@@ -12,4 +12,5 @@ mappings = {
     ),
     "Horimiya -piece-": ("Horimiya - Piece", 0),
     "Mushoku Tensei II: Isekai Ittara Honki Dasu": ("Mushoku Tensei S2", -1),
+    "Jujutsu Kaisen 2nd Season": ("Jujutsu Kaisen", 24),
 }
