@@ -14,4 +14,5 @@ mappings = {
     "Mushoku Tensei II: Isekai Ittara Honki Dasu": ("Mushoku Tensei S2", -1),
     "Jujutsu Kaisen 2nd Season": ("Jujutsu Kaisen", 24),
     "Bungou Stray Dogs 5th Season": ("Bungou Stray Dogs", 50),
+    "Hataraku Maou-sama!! 2nd Season": ("Hataraku Maou-sama S2", 12),
 }
