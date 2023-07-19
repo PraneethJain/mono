@@ -1,3 +1,4 @@
+from textual import on
 from textual.app import App, ComposeResult
 from textual.containers import VerticalScroll, Horizontal
 from textual.widgets import (
@@ -7,7 +8,9 @@ from textual.widgets import (
     Markdown,
     ContentSwitcher,
     Button,
+    Input,
 )
+from textual.validation import Function
 
 from asyncio import gather
 from json import load, dump
@@ -20,7 +23,7 @@ from scrape import scraper
 
 
 class Cards(VerticalScroll):
-    def __init__(self, card_data, id) -> None:
+    def __init__(self, card_data, id: str) -> None:
         super().__init__(id=id)
         self.card_data = card_data
 
@@ -34,6 +37,38 @@ class Cards(VerticalScroll):
             await self.mount(card)
 
 
+class Settings(VerticalScroll):
+    def __init__(self, download_path: str, id: str) -> None:
+        super().__init__(id=id)
+        self.download_path = download_path
+        self.download_path_input = Input(
+            placeholder=download_path,
+            validators=[Function(path.exists, "Path does not exist!")],
+            id="download-path-input",
+        )
+
+        if path.exists(self.download_path):
+            self.download_path_status = Markdown(f"Download Path: {self.download_path}")
+        else:
+            self.download_path_status = Markdown("Invalid download path")
+
+    @on(Input.Submitted, "#download-path-input")
+    def update_download_path(self, event: Input.Submitted):
+        if event.validation_result.is_valid:
+            self.download_path = event.value
+            with open(data_path, "r") as f:
+                data = load(f)
+            data["download_path"] = self.download_path
+            self.download_path_input.placeholder = self.download_path
+            with open(data_path, "w") as f:
+                dump(data, f)
+            self.download_path_status.update(f"Download Path: {self.download_path}")
+
+    def compose(self) -> ComposeResult:
+        yield self.download_path_status
+        yield self.download_path_input
+
+
 class Switcher(Static):
     def __init__(self) -> None:
         super().__init__()
@@ -41,13 +76,9 @@ class Switcher(Static):
 
         with open(data_path, "r") as f:
             data = load(f)
-            if "download_path" not in data:
-                download_path = ""
-                while not path.exists(download_path):
-                    download_path = input("Enter path to store downloads: ")
-                data["download_path"] = download_path
-        with open(data_path, "w") as f:
-            dump(data, f)
+            self.download_path = (
+                data["download_path"] if "download_path" in data else None
+            )
 
     async def on_mount(self) -> None:
         user_data = await ani.get_user_data()
@@ -58,6 +89,7 @@ class Switcher(Static):
             Horizontal(
                 Button("Anime", id="anime"),
                 Button("Profile", id="profile"),
+                Button("Settings", id="settings"),
                 id="context-buttons",
             )
         )
@@ -65,12 +97,13 @@ class Switcher(Static):
             ContentSwitcher(
                 Cards(card_data, id="anime"),
                 Markdown("Profile Info", id="profile"),
-                initial="anime",
+                Settings(download_path=self.download_path, id="settings"),
+                initial="settings",
             )
         )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.id in ["anime", "profile"]:
+        if event.button.id in ["anime", "profile", "settings"]:
             self.query_one(ContentSwitcher).current = event.button.id
 
     async def on_quit(self) -> None:
