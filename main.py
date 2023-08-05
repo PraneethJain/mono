@@ -77,7 +77,7 @@ class Switcher(Static):
         with open(data_path, "r") as f:
             data = load(f)
             self.download_path = (
-                data["download_path"] if "download_path" in data else None
+                data["download_path"] if "download_path" in data else ""
             )
 
     async def on_mount(self) -> None:
